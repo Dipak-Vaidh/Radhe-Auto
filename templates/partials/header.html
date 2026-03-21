@@ -1,0 +1,131 @@
+{% load static %}
+{% comment %}
+  GLOBAL HEADER - Edit this file to change logo, nav links, search, or mobile menu.
+  Included in base.html.
+{% endcomment %}
+<header id="main-header" class="sticky z-50 flex bg-slate-50 pt-4 px-4 sm:px-6 pb-4 top-0 gap-3 sm:gap-6 items-center">
+    <!-- Left: Logo + Brand name -->
+    <a href="{% url 'home' %}" class="flex items-center gap-1.5 shrink-0 no-underline">
+        <div class="bg-blue-600 rounded-md p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-white"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
+        </div>
+        <span class="text-base sm:text-xl font-medium text-gray-900 tracking-tight whitespace-nowrap">Radhe<span class="text-blue-400">Cars</span></span>
+    </a>
+
+    <!-- Center: Search (flexible, min-width to prevent collapse) -->
+    <form action="{% url 'car_list' %}" method="get" id="header-search-form" class="flex-1 min-w-0 mx-2 sm:mx-4 max-w-2xl relative">
+        <input type="text" name="q" id="header-search" placeholder="Search cars..." value="{{ request.GET.q|default:'' }}" class="w-full bg-white border border-gray-300 rounded-full py-2 sm:py-2.5 pl-4 sm:pl-6 pr-10 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-400 transition-colors">
+        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 text-gray-400"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        </button>
+    </form>
+
+    <!-- Right: Hamburger on mobile, full nav on desktop -->
+    <button type="button" id="mobile-menu-btn" class="lg:hidden shrink-0 p-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+    </button>
+
+    <div class="hidden lg:flex items-center gap-6 shrink-0">
+        <a href="{% url 'sell_car' %}" class="no-underline">
+            <button class="group transition-all duration-300 hover:shadow-[0_0_40px_-5px_rgba(139,92,246,0.6)] text-lg font-medium text-white bg-black rounded-full pt-3 pr-8 pb-3 pl-8 relative">
+                <div class="mask-linear bg-blue-700 opacity-100 rounded-full pt-[1px] pr-[1px] pb-[1px] pl-[1px] absolute top-0 right-0 bottom-0 left-0"></div>
+                <div class="bg-gradient-to-r from-transparent via-white/40 to-transparent h-[1px] absolute top-0 right-4 left-4"></div>
+                <span class="flex items-center gap-2 z-10 relative drop-shadow-md">Sell Car</span>
+            </button>
+        </a>
+        <a href="{% url 'car_list' %}" class="no-underline hover:text-gray-600 transition-colors text-sm font-medium text-slate-950">Buy Car</a>
+        <a href="{% url 'wishlist' %}" class="flex flex-col gap-0.5 cursor-pointer group text-slate-950 items-center no-underline">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="group-hover:text-rose-400 transition-colors text-rose-400"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+            <span class="text-xs text-gray-600">Wishlist</span>
+        </a>
+        {% if user.is_authenticated %}
+        <div class="relative group">
+            <div class="flex flex-col gap-0.5 cursor-pointer text-slate-950 items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span class="text-xs text-gray-600">{{ user.username }}</span>
+            </div>
+            <div class="hidden group-hover:block absolute right-0 top-full pt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[160px] z-50">
+                {% if user.is_staff %}
+                <a href="{% url 'admin:index' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">Admin Panel</a>
+                {% endif %}
+                <a href="{% url 'wishlist' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">My Wishlist</a>
+                <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-50 no-underline">Logout</a>
+            </div>
+        </div>
+        {% else %}
+        <a href="{% url 'login' %}" class="flex flex-col gap-0.5 cursor-pointer group text-slate-950 items-center no-underline">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="group-hover:text-gray-600"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="text-xs text-gray-600">Account</span>
+        </a>
+        {% endif %}
+        <div class="w-px h-8 bg-gray-300"></div>
+        <div class="flex flex-col items-center cursor-pointer">
+            <span class="text-xs text-gray-400">Call us</span>
+            <span class="text-sm font-semibold text-slate-900">962 493 8377</span>
+        </div>
+    </div>
+</header>
+
+<!-- Mobile menu overlay -->
+<div id="mobile-menu" class="fixed inset-0 z-[60] hidden">
+    <div id="mobile-menu-backdrop" class="absolute inset-0 bg-black/40"></div>
+    <div id="mobile-menu-panel" class="absolute top-0 right-0 w-[280px] max-w-[85vw] h-full bg-white shadow-xl flex flex-col transform translate-x-full transition-transform duration-300">
+        <div class="flex items-center justify-between p-4 border-b border-gray-100">
+            <span class="font-semibold text-gray-900">Menu</span>
+            <button type="button" id="mobile-menu-close" class="p-2 rounded-lg hover:bg-gray-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <nav class="flex flex-col p-4 gap-1">
+            <a href="{% url 'home' %}" class="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-gray-50 text-gray-700 font-medium no-underline">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                Home
+            </a>
+            <a href="{% url 'car_list' %}" class="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-gray-50 text-gray-700 font-medium no-underline">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                Buy Car
+            </a>
+            <a href="{% url 'sell_car' %}" class="flex items-center gap-3 py-3 px-4 rounded-xl bg-blue-600 text-white font-medium no-underline">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                Sell Car
+            </a>
+            <a href="{% url 'wishlist' %}" class="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-gray-50 text-gray-700 font-medium no-underline">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                Wishlist
+            </a>
+            {% if user.is_authenticated %}
+            <div class="flex items-center gap-3 py-3 px-4 rounded-xl text-gray-700 font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                {{ user.username }}
+            </div>
+            <a href="{% url 'logout' %}" class="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-gray-50 text-red-600 font-medium no-underline">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Logout
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}" class="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-gray-50 text-gray-700 font-medium no-underline">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Account
+            </a>
+            {% endif %}
+            <div class="border-t border-gray-100 mt-4 pt-4">
+                <p class="text-xs text-gray-400 px-4 mb-1">Call us</p>
+                <a href="tel:9624938377" class="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-gray-50 text-gray-700 font-semibold no-underline">962 493 8377</a>
+            </div>
+        </nav>
+    </div>
+</div>
+<script>
+(function(){
+    var menu = document.getElementById('mobile-menu');
+    var panel = document.getElementById('mobile-menu-panel');
+    var btn = document.getElementById('mobile-menu-btn');
+    var closeBtn = document.getElementById('mobile-menu-close');
+    var backdrop = document.getElementById('mobile-menu-backdrop');
+    function openMenu(){ menu.classList.remove('hidden'); if(panel){ panel.classList.remove('translate-x-full'); } document.body.style.overflow='hidden'; }
+    function closeMenu(){ menu.classList.add('hidden'); if(panel){ panel.classList.add('translate-x-full'); } document.body.style.overflow=''; }
+    if(btn) btn.addEventListener('click', openMenu);
+    if(closeBtn) closeBtn.addEventListener('click', closeMenu);
+    if(backdrop) backdrop.addEventListener('click', closeMenu);
+})();
+</script>

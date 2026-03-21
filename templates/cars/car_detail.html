@@ -1,0 +1,470 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ car.title }} - Radhe Cars{% endblock %}
+
+{% block content %}
+<main class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 flex flex-col lg:flex-row gap-10 lg:gap-16 items-start relative">
+
+    <!-- Left Column: Gallery & Details -->
+    <div class="w-full lg:flex-1 flex flex-col gap-16 min-w-0 order-1">
+
+        <!-- Gallery Section -->
+        <section class="flex flex-col gap-4">
+            <div class="relative w-full aspect-video bg-gray-100 rounded-2xl overflow-hidden group">
+                {% if car.images.all %}
+                <div id="gallery-track" class="flex w-full h-full" style="transform: translateX(-100%); transition: transform 700ms cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform">
+                    {% for img in car.images.all %}
+                    <div class="gallery-slide w-full h-full shrink-0">
+                        <img src="{{ img.display_url }}" alt="{{ car.title }}" class="w-full h-full object-cover">
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif car.primary_image %}
+                <img id="main-image" src="{{ car.primary_image.display_url }}" alt="{{ car.title }}" class="w-full h-full object-cover">
+                {% else %}
+                <div id="main-image-placeholder" class="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="text-gray-400"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
+                </div>
+                {% endif %}
+                {% if car.images.all %}
+                <button type="button" id="gallery-prev" class="gallery-arrow absolute left-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all opacity-0 group-hover:opacity-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button type="button" id="gallery-next" class="gallery-arrow absolute right-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all opacity-0 group-hover:opacity-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2" id="gallery-dots"></div>
+                {% endif %}
+            </div>
+
+            {% if car.images.all %}
+            <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x" id="gallery-thumbs">
+                {% for img in car.images.all %}
+                <button type="button" class="gallery-thumb relative w-32 aspect-video shrink-0 rounded-xl overflow-hidden border-2 {% if forloop.first %}border-blue-600{% else %}border-transparent hover:border-gray-300{% endif %} transition-colors snap-start group" data-index="{{ forloop.counter0 }}" data-src="{{ img.display_url }}">
+                    <img src="{{ img.display_url }}" alt="Thumbnail {{ forloop.counter }}" class="w-full h-full object-cover {% if not forloop.first %}opacity-80 group-hover:opacity-100{% endif %} transition-opacity">
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Mobile-only: Booking panel (title, price, buttons, seller) - shown after gallery, before overview -->
+        <div class="lg:hidden flex flex-col gap-6">
+            <div class="flex flex-col gap-4">
+                <div class="flex items-start justify-between gap-4">
+                    <h1 class="text-2xl font-semibold text-gray-900 tracking-tight leading-[1.2] flex-1 min-w-0">{{ car.title }}</h1>
+                    {% if user.is_authenticated %}
+                    <button type="button" class="wishlist-toggle flex flex-col items-center gap-0.5 shrink-0 p-2 text-gray-500 hover:text-rose-500 transition-colors group bg-transparent border-0 cursor-pointer" data-car-pk="{{ car.pk }}" data-in-wishlist="{{ in_wishlist|yesno:'1,0' }}" data-url="{% url 'toggle_wishlist' car.pk %}">
+                        <span class="wishlist-icon-filled {% if not in_wishlist %}hidden{% endif %}"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" class="w-8 h-8 text-rose-500"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg></span>
+                        <span class="wishlist-icon-outline {% if in_wishlist %}hidden{% endif %}"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-8 h-8 group-hover:text-rose-500"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg></span>
+                        <span class="wishlist-count text-xs text-gray-400 group-hover:text-gray-600">{{ wishlist_count }} {% if wishlist_count == 1 %}person{% else %}people{% endif %} shortlisted</span>
+                    </button>
+                    {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path|urlencode }}" class="flex flex-col items-center gap-0.5 shrink-0 p-2 text-gray-500 hover:text-rose-500 transition-colors group no-underline">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-8 h-8 group-hover:text-rose-500"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+                        <span class="text-xs text-gray-400 group-hover:text-gray-600">{{ wishlist_count }} {% if wishlist_count == 1 %}person{% else %}people{% endif %} shortlisted</span>
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium">{{ car.mileage|floatformat:0 }} km</span>
+                    <span class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium">{{ car.ownership }}</span>
+                    <span class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium">{{ car.get_transmission_display }}</span>
+                    <span class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium">{{ car.fuel_type }}</span>
+                    {% if car.rto %}
+                    <span class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium">{{ car.rto }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex flex-col gap-4 overflow-hidden bg-gray-50 border border-gray-200 rounded-2xl pt-6 pr-6 pb-6 pl-6 relative">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100/50 to-transparent rounded-bl-full pointer-events-none"></div>
+                <div class="flex flex-col gap-1 relative z-10">
+                    <span class="text-xs text-gray-500 uppercase tracking-wide">Car price</span>
+                    <span class="text-4xl font-semibold text-gray-900 tracking-tight">{{ car.price_display }}</span>
+                    <p class="text-sm text-gray-500 mt-1">+ Price will be negotiable. Contact us now.</p>
+                </div>
+                {% if car.original_price %}
+                <div class="flex items-center gap-2 text-base relative z-10">
+                    <span class="text-gray-500 line-through">{{ car.original_price_display }}</span>
+                    {% if car.savings_display %}
+                    <span class="text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded text-sm">(Save {{ car.savings_display }})</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex flex-col gap-3">
+                <a href="{% url 'contact' %}" class="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white py-4 rounded-xl text-lg font-semibold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 text-center no-underline flex items-center justify-center">
+                    Contact Us
+                </a>
+                <button type="button" class="share-btn w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-4 rounded-xl text-lg font-semibold transition-all flex items-center justify-center gap-2" data-share-url="{{ request.build_absolute_uri }}" data-share-title="{{ car.title }} - {{ car.price_display }}" onclick="event.stopPropagation(); event.preventDefault(); if(window.doShare) window.doShare(this); return false;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    Share
+                </button>
+            </div>
+            {% if car.contact_number %}
+            <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                <h3 class="font-semibold text-gray-900 mb-3">Seller Contact</h3>
+                {% if car.contact_name %}
+                <p class="text-sm text-gray-600 mb-1">{{ car.contact_name }}</p>
+                {% endif %}
+                <a href="tel:{{ car.contact_number }}" class="text-blue-600 font-medium">{{ car.contact_number }}</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Car Overview -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 tracking-tight mb-8">Car Overview</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-y-10 gap-x-6 border-t border-gray-100 pt-8">
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-sm text-gray-500">Make Year</span>
+                    <span class="text-base font-medium text-gray-900">{{ car.year }}</span>
+                </div>
+                {% if car.registration_year %}
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-sm text-gray-500">Registration Year</span>
+                    <span class="text-base font-medium text-gray-900">{{ car.registration_year }}</span>
+                </div>
+                {% endif %}
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-sm text-gray-500">Fuel Type</span>
+                    <span class="text-base font-medium text-gray-900">{{ car.fuel_type }}</span>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-sm text-gray-500">Km Driven</span>
+                    <span class="text-base font-medium text-gray-900">{{ car.mileage_display }}</span>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-sm text-gray-500">Transmission</span>
+                    <span class="text-base font-medium text-gray-900">{{ car.get_transmission_display }}</span>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-sm text-gray-500">No. of Owner</span>
+                    <span class="text-base font-medium text-gray-900">{{ car.ownership }}</span>
+                </div>
+                {% if car.insurance_validity %}
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-sm text-gray-500">Insurance Validity</span>
+                    <span class="text-base font-medium text-gray-900">{{ car.insurance_validity }}</span>
+                </div>
+                {% endif %}
+                {% if car.insurance_type %}
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-sm text-gray-500">Insurance Type</span>
+                    <span class="text-base font-medium text-gray-900">{{ car.insurance_type }}</span>
+                </div>
+                {% endif %}
+                {% if car.rto %}
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-sm text-gray-500">RTO</span>
+                    <span class="text-base font-medium text-gray-900">{{ car.rto }}</span>
+                </div>
+                {% endif %}
+                {% if car.color %}
+                <div class="flex flex-col gap-1.5">
+                    <span class="text-sm text-gray-500">Color</span>
+                    <span class="text-base font-medium text-gray-900">{{ car.color }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        {% if car.description %}
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-900 tracking-tight mb-4">Description</h2>
+            <p class="text-gray-600 leading-relaxed">{{ car.description }}</p>
+        </section>
+        {% endif %}
+
+        <!-- Similar Cars - last section above footer on mobile -->
+        {% if similar_cars %}
+        <section class="bg-[#f8fafc] -mx-4 sm:-mx-6 lg:mx-0 px-4 sm:px-6 lg:px-10 py-12 rounded-none lg:rounded-3xl border border-transparent lg:border-gray-100">
+            <h2 class="text-2xl font-semibold text-gray-900 tracking-tight mb-6 lg:mb-8">Similar Cars</h2>
+            <div class="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:overflow-visible lg:gap-6" style="-webkit-overflow-scrolling: touch;">
+                {% for scar in similar_cars %}
+                <article class="w-[280px] min-w-[280px] shrink-0 snap-start bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0 lg:hover:-translate-y-1 group lg:w-auto lg:min-w-0 lg:shrink">
+                    <div class="relative h-[220px] bg-slate-100 overflow-hidden">
+                        {% if scar.primary_image %}
+                        <img src="{{ scar.primary_image.display_url }}" alt="{{ scar.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        {% else %}
+                        <div class="w-full h-full bg-gray-200"></div>
+                        {% endif %}
+                    </div>
+                    <div class="p-5 flex flex-col flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1 tracking-tight">{{ scar.title }}</h3>
+                        <p class="text-sm text-gray-500 mb-4">{{ scar.specs_short }}</p>
+                        <p class="text-xl font-semibold text-gray-900 tracking-tight mb-6">{{ scar.price_display }}</p>
+                        <div class="mt-auto flex gap-3">
+                            <a href="{% url 'car_detail' scar.pk %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm text-center no-underline">Book Now</a>
+                            <button type="button" class="share-btn px-5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl text-sm font-medium transition-colors" data-share-url="{% url 'car_detail' scar.pk %}" data-share-title="{{ scar.title }} - {{ scar.price_display }}" onclick="event.stopPropagation(); event.preventDefault(); if(window.doShare) window.doShare(this); return false;">Share</button>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Testimonials -->
+        {% if testimonials %}
+        <section class="bg-[#0f172a] -mx-4 sm:-mx-6 lg:mx-0 px-4 sm:px-6 lg:px-10 py-16 rounded-none lg:rounded-[2rem] text-white">
+            <h2 class="text-3xl font-semibold text-center tracking-tight mb-12">Stories from Happy Customers</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for t in testimonials %}
+                <div class="relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer">
+                    <img src="{{ t.image.url }}" alt="{{ t.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                    <div class="absolute bottom-6 left-6 right-6">
+                        <h4 class="text-lg font-semibold mb-1">{{ t.name }}</h4>
+                        <p class="text-sm text-gray-300 leading-snug">{{ t.designation }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: Sticky Booking Panel (desktop only - mobile uses inline panel above) -->
+    <aside class="hidden lg:flex w-full lg:w-[380px] xl:w-[420px] shrink-0 lg:sticky lg:top-[120px] h-fit flex-col gap-6 lg:pb-12 order-2">
+
+        <div class="flex flex-col gap-4">
+            <div class="flex items-start justify-between gap-4">
+                <h1 class="text-3xl font-semibold text-gray-900 tracking-tight leading-[1.2] flex-1 min-w-0">{{ car.title }}</h1>
+                {% if user.is_authenticated %}
+                <button type="button" class="wishlist-toggle flex flex-col items-center gap-0.5 shrink-0 p-2 text-gray-500 hover:text-rose-500 transition-colors group bg-transparent border-0 cursor-pointer" data-car-pk="{{ car.pk }}" data-in-wishlist="{{ in_wishlist|yesno:'1,0' }}" data-url="{% url 'toggle_wishlist' car.pk %}">
+                    <span class="wishlist-icon-filled {% if not in_wishlist %}hidden{% endif %}"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" class="w-8 h-8 text-rose-500"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg></span>
+                    <span class="wishlist-icon-outline {% if in_wishlist %}hidden{% endif %}"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-8 h-8 group-hover:text-rose-500"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg></span>
+                    <span class="wishlist-count text-xs text-gray-400 group-hover:text-gray-600">{{ wishlist_count }} {% if wishlist_count == 1 %}person{% else %}people{% endif %} shortlisted</span>
+                </button>
+                {% else %}
+                <a href="{% url 'login' %}?next={{ request.path|urlencode }}" class="flex flex-col items-center gap-0.5 shrink-0 p-2 text-gray-500 hover:text-rose-500 transition-colors group no-underline">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-8 h-8 group-hover:text-rose-500"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+                    <span class="text-xs text-gray-400 group-hover:text-gray-600">{{ wishlist_count }} {% if wishlist_count == 1 %}person{% else %}people{% endif %} shortlisted</span>
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <span class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium">{{ car.mileage|floatformat:0 }} km</span>
+                <span class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium">{{ car.ownership }}</span>
+                <span class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium">{{ car.get_transmission_display }}</span>
+                <span class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium">{{ car.fuel_type }}</span>
+                {% if car.rto %}
+                <span class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium">{{ car.rto }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Price Card -->
+        <div class="flex flex-col gap-4 overflow-hidden bg-gray-50 border-gray-200 border rounded-2xl mt-2 pt-6 pr-6 pb-6 pl-6 relative">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100/50 to-transparent rounded-bl-full pointer-events-none"></div>
+            <div class="flex flex-col gap-1 relative z-10">
+                <span class="text-xs text-gray-500 uppercase tracking-wide">Car price</span>
+                <span class="text-4xl font-semibold text-gray-900 tracking-tight">{{ car.price_display }}</span>
+                <p class="text-sm text-gray-500 mt-1">+ Price will be negotiable. Contact us now.</p>
+            </div>
+            {% if car.original_price %}
+            <div class="flex items-center gap-2 text-base relative z-10">
+                <span class="text-gray-500 line-through">{{ car.original_price_display }}</span>
+                {% if car.savings_display %}
+                <span class="text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded text-sm">(Save {{ car.savings_display }})</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col gap-3">
+            <a href="{% url 'contact' %}" class="w-full bg-[#ea580c] hover:bg-[#c2410c] text-white py-4 rounded-xl text-lg font-semibold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 text-center no-underline flex items-center justify-center">
+                Contact Us
+            </a>
+            <button type="button" class="share-btn w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-4 rounded-xl text-lg font-semibold transition-all flex items-center justify-center gap-2" data-share-url="{{ request.build_absolute_uri }}" data-share-title="{{ car.title }} - {{ car.price_display }}" onclick="event.stopPropagation(); event.preventDefault(); if(window.doShare) window.doShare(this); return false;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Share
+            </button>
+        </div>
+
+        <!-- Contact Info -->
+        {% if car.contact_number %}
+        <div class="bg-white border border-gray-200 rounded-2xl p-6">
+            <h3 class="font-semibold text-gray-900 mb-3">Seller Contact</h3>
+            {% if car.contact_name %}
+            <p class="text-sm text-gray-600 mb-1">{{ car.contact_name }}</p>
+            {% endif %}
+            <a href="tel:{{ car.contact_number }}" class="text-blue-600 font-medium">{{ car.contact_number }}</a>
+        </div>
+        {% endif %}
+    </aside>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    var btns = document.querySelectorAll('.wishlist-toggle');
+    if (!btns.length) return;
+
+    btns.forEach(function(btn){
+        btn.addEventListener('click', function(e){
+            e.preventDefault();
+            var url = btn.getAttribute('data-url');
+            if (!url) return;
+            if (btn.disabled) return;
+            btn.disabled = true;
+
+            fetch(url, {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(data){
+                var allToggles = document.querySelectorAll('.wishlist-toggle');
+                allToggles.forEach(function(t){
+                    var filled = t.querySelector('.wishlist-icon-filled');
+                    var outline = t.querySelector('.wishlist-icon-outline');
+                    var countEl = t.querySelector('.wishlist-count');
+                    if (filled && outline) {
+                        if (data.added) {
+                            filled.classList.remove('hidden');
+                            outline.classList.add('hidden');
+                        } else {
+                            filled.classList.add('hidden');
+                            outline.classList.remove('hidden');
+                        }
+                    }
+                    if (countEl) {
+                        var n = data.wishlist_count || 0;
+                        countEl.textContent = n + ' ' + (n === 1 ? 'person' : 'people') + ' shortlisted';
+                    }
+                });
+            })
+            .catch(function(){})
+            .finally(function(){ btn.disabled = false; });
+        });
+    });
+})();
+</script>
+{% if car.images.all %}
+<script>
+(function() {
+    var track = document.getElementById('gallery-track');
+    var thumbs = document.querySelectorAll('.gallery-thumb');
+    var dotsEl = document.getElementById('gallery-dots');
+    var prevBtn = document.getElementById('gallery-prev');
+    var nextBtn = document.getElementById('gallery-next');
+    var arrows = document.querySelectorAll('.gallery-arrow');
+
+    if (!track || !thumbs.length) return;
+
+    var slides = track.querySelectorAll('.gallery-slide');
+    var total = slides.length;
+
+    // Clone last slide at start, clone first slide at end (infinite loop)
+    var cloneLast = slides[total - 1].cloneNode(true);
+    var cloneFirst = slides[0].cloneNode(true);
+    track.insertBefore(cloneLast, track.firstChild);
+    track.appendChild(cloneFirst);
+
+    var pos = 1;  // 1 = first real image (track has clone at 0, so real start at 1)
+    var moving = false;
+    var timer;
+
+    function move(p, animate) {
+        track.style.transition = animate ? 'transform 700ms cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
+        track.style.transform = 'translateX(-' + (p * 100) + '%)';
+    }
+
+    function realIdx() {
+        if (pos === 0) return total - 1;
+        if (pos === total + 1) return 0;
+        return pos - 1;
+    }
+
+    function slideTo(i) {
+        if (moving) return;
+        var target = ((i % total) + total) % total;
+        pos = target + 1;
+        move(pos, true);
+        updateThumbsDots();
+        resetTimer();
+    }
+
+    function slideNext() {
+        if (moving) return;
+        moving = true;
+        if (pos === total) {
+            pos = total + 1;  // go to clone of first (slides in from right)
+        } else {
+            pos++;
+        }
+        move(pos, true);
+        updateThumbsDots();
+        resetTimer();
+    }
+
+    function slidePrev() {
+        if (moving) return;
+        moving = true;
+        if (pos === 1) {
+            pos = 0;  // go to clone of last (slides in from left)
+        } else {
+            pos--;
+        }
+        move(pos, true);
+        updateThumbsDots();
+        resetTimer();
+    }
+
+    track.addEventListener('transitionend', function() {
+        moving = false;
+        if (pos === total + 1) {
+            pos = 1;
+            move(pos, false);
+        } else if (pos === 0) {
+            pos = total;
+            move(pos, false);
+        }
+    });
+
+    function updateThumbsDots() {
+        var idx = realIdx();
+        thumbs.forEach(function(t, j){
+            t.classList.toggle('border-blue-600', j === idx);
+            t.classList.toggle('border-transparent', j !== idx);
+        });
+        dotsEl.innerHTML = '';
+        for (var i = 0; i < total; i++) {
+            var d = document.createElement('button');
+            d.type = 'button';
+            d.className = 'w-2 h-2 rounded-full transition-opacity ' + (i === idx ? 'bg-white opacity-100' : 'bg-white/60 hover:bg-white/80');
+            d.setAttribute('aria-label', 'Image ' + (i + 1));
+            d.addEventListener('click', function(ii){ return function(){ slideTo(ii); }; }(i));
+            dotsEl.appendChild(d);
+        }
+    }
+
+    function resetTimer() {
+        clearInterval(timer);
+        timer = setInterval(slideNext, 5000);
+    }
+
+    prevBtn.addEventListener('click', slidePrev);
+    nextBtn.addEventListener('click', slideNext);
+
+    thumbs.forEach(function(t, i){
+        t.addEventListener('click', function(){ slideTo(i); });
+    });
+
+    if (total === 1) {
+        arrows.forEach(function(a){ a.style.display = 'none'; });
+        dotsEl.style.display = 'none';
+    } else {
+        updateThumbsDots();
+        resetTimer();
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

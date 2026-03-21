@@ -1,0 +1,7 @@
+{% for car in cars %}
+<div class="w-[280px] min-w-[280px] sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] shrink-0 snap-start">
+    {% include 'partials/car_card.html' with car=car wishlisted_ids=wishlisted_ids %}
+</div>
+{% empty %}
+<p class="text-center text-gray-500 py-12 w-full min-w-full">No cars found for this body type.</p>
+{% endfor %}

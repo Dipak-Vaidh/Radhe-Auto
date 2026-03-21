@@ -1,0 +1,846 @@
+{% extends 'base.html' %}
+{% block title %}Sell Your Car - Radhe Cars{% endblock %}
+{% block extra_css %}
+<style>
+/* Step-by-step: only ONE step visible at a time - same page, step-by-step like "next page" */
+.sell-steps .step{display:none !important}
+.sell-steps .step.active{display:block !important;animation:stepIn .3s ease-out}
+@keyframes stepIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.sell-card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);max-width:520px;margin:0 auto;height:auto;max-height:calc(100vh - 120px);min-height:320px;display:flex;flex-direction:column;overflow:hidden}
+.sell-form-inner{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.sell-steps{flex:0 1 auto;max-height:50vh;min-height:140px;overflow-y:auto;overflow-x:hidden;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+.sell-footer{flex-shrink:0;padding:10px 20px;border-top:1px solid #e2e8f0;background:#fff}
+@media(max-width:640px){
+.sell-footer{padding:12px 20px;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+}
+.sell-steps::-webkit-scrollbar{width:6px}
+.sell-steps::-webkit-scrollbar-track{background:#f1f5f9;border-radius:3px}
+.sell-steps::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+.sell-steps::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+.sell-breadcrumb{font-size:13px;font-weight:600;color:#1e293b;padding:12px 20px;border-bottom:1px solid #f1f5f9;min-height:44px;flex-shrink:0}
+.sell-breadcrumb.empty{color:#94a3b8;font-weight:500}
+.sell-progress{display:flex;gap:6px;padding:12px 20px;border-bottom:1px solid #f1f5f9;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.sell-progress::-webkit-scrollbar{display:none}
+.sell-pill{padding:8px 14px;border-radius:9999px;font-size:12px;font-weight:600;flex-shrink:0;transition:all .2s}
+.sell-pill.active{background:#1e40af;color:#fff}
+.sell-pill.done{background:#dcfce7;color:#166534}
+.sell-pill.wait{background:#f1f5f9;color:#94a3b8}
+.sell-step-body{padding:20px 20px}
+.sell-step-title{font-size:18px;font-weight:700;color:#0f172a;margin-bottom:4px}
+.sell-step-sub{font-size:13px;color:#64748b;margin-bottom:16px}
+.sell-search{position:relative;margin-bottom:14px}
+.sell-search input{width:100%;padding:12px 16px 12px 44px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;outline:none}
+.sell-search input:focus{border-color:#1e40af;box-shadow:0 0 0 3px rgba(30,64,175,.1)}
+.sell-search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:#94a3b8}
+.sell-label{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.opt-card{border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .2s;background:#fff}
+.opt-card:hover{border-color:#cbd5e1;background:#f8fafc}
+.opt-card.selected{border:2px solid #1e40af;background:#eff6ff}
+.opt-card span{font-size:14px;font-weight:600;color:#334155}
+.fuel-box{border:1px solid #e2e8f0;border-radius:10px;padding:16px;cursor:pointer;text-align:center;transition:all .2s}
+.fuel-box:hover{border-color:#cbd5e1}
+.fuel-box.selected{border:2px solid #1e40af;background:#eff6ff}
+.fuel-box .icon{font-size:28px;margin-bottom:8px}
+.fuel-box span{font-size:14px;font-weight:600;color:#334155}
+.list-card{border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .2s}
+.list-card:hover{border-color:#cbd5e1}
+.list-card.selected{border:2px solid #1e40af;background:#eff6ff}
+.list-card span{font-size:14px;font-weight:600;color:#334155}
+.city-box{border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;cursor:pointer;text-align:center;transition:all .2s}
+.city-box:hover{border-color:#cbd5e1}
+.city-box.selected{border:2px solid #1e40af;background:#eff6ff}
+.city-box span{font-size:13px;font-weight:600;color:#334155}
+.tl-box{border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .2s}
+.tl-box:hover{border-color:#cbd5e1}
+.tl-box.selected{border:2px solid #1e40af;background:#eff6ff}
+.tl-box span{font-size:15px;font-weight:600;color:#334155}
+.sell-input{width:100%;padding:14px 18px;border:1px solid #e2e8f0;border-radius:10px;font-size:16px;outline:none}
+.sell-input:focus{border-color:#1e40af;box-shadow:0 0 0 3px rgba(30,64,175,.1)}
+.btn-primary{background:#1e40af;color:#fff;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;border:none;cursor:pointer;width:100%;transition:all .2s}
+.btn-primary:hover{background:#1d4ed8}
+.btn-back{background:#fff;color:#1e40af;padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px;border:2px solid #1e40af;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;width:auto;min-width:140px;max-width:240px;margin:0 auto}
+.btn-back svg{flex-shrink:0;display:block}
+.btn-back:hover{background:#eff6ff;border-color:#1d4ed8;color:#1d4ed8}
+.btn-back:active{background:#dbeafe}
+.sell-footer{display:flex;justify-content:center;align-items:center}
+@media(max-width:640px){
+.btn-back{min-height:44px;font-size:15px;border-radius:12px;min-width:120px;max-width:200px}
+}
+.upload-zone{border:2px dashed #e2e8f0;border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover{border-color:#1e40af;background:#eff6ff}
+.upload-zone .icon-wrap{width:56px;height:56px;background:#eff6ff;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.upload-zone .icon-wrap svg{width:28px;height:28px;color:#1e40af}
+.state-box{border:1px solid #e2e8f0;border-radius:12px;padding:20px;cursor:pointer;text-align:center;transition:all .2s}
+.state-box:hover{border-color:#cbd5e1}
+.state-box.selected{border:2px solid #1e40af;background:#eff6ff}
+.district-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.district-box{border:1px solid #e2e8f0;border-radius:8px;padding:10px;cursor:pointer;text-align:center;transition:all .2s}
+.district-box:hover{border-color:#cbd5e1}
+.district-box.selected{border:2px solid #1e40af;background:#eff6ff}
+.district-box span{font-size:13px;font-weight:600;color:#334155}
+.variant-section{background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:16px}
+.variant-dropdown{position:relative;width:100%}
+.variant-dropdown-btn{width:100%;padding:14px 18px;border:2px solid #e2e8f0;border-radius:12px;background:#fff;text-align:left;font-size:15px;font-weight:600;color:#1e293b;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .2s}
+.variant-dropdown-btn:hover{border-color:#94a3b8;background:#fff}
+.variant-dropdown-btn.open{border-color:#1e40af;background:#eff6ff;box-shadow:0 0 0 4px rgba(30,64,175,.15)}
+.variant-dropdown-btn svg{transition:transform .2s}
+.variant-dropdown-btn.open svg{transform:rotate(180deg)}
+.variant-dropdown-panel{position:absolute;top:100%;left:0;right:0;margin-top:8px;background:#fff;border:2px solid #e2e8f0;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.12);z-index:50;max-height:260px;overflow:hidden;display:flex;flex-direction:column}
+.variant-search-wrap{position:relative;padding:12px;border-bottom:1px solid #e2e8f0;background:#f8fafc}
+.variant-search-wrap input{width:100%;padding:10px 14px 10px 40px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;background:#fff}
+.variant-search-wrap input:focus{border-color:#1e40af}
+.variant-search-wrap svg{position:absolute;left:24px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:#94a3b8;pointer-events:none}
+.variant-dropdown-list{overflow-y:auto;max-height:200px}
+.variant-dropdown-list::-webkit-scrollbar{width:6px}
+.variant-dropdown-list::-webkit-scrollbar-track{background:#f1f5f9;border-radius:3px}
+.variant-dropdown-list::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+.variant-option{padding:14px 18px;cursor:pointer;font-size:15px;font-weight:500;color:#334155;border-bottom:1px solid #f1f5f9;transition:background .15s}
+.variant-option:hover{background:#eff6ff}
+.variant-option.selected{background:#eff6ff;color:#1e40af;font-weight:600}
+.variant-option:last-child{border-bottom:none}
+.variant-divider{display:flex;align-items:center;gap:12px;margin:20px 0 16px;color:#94a3b8;font-size:13px;font-weight:500}
+.variant-divider::before,.variant-divider::after{content:'';flex:1;height:1px;background:#e2e8f0}
+.variant-custom{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:16px}
+.variant-custom-label{font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.variant-custom .sell-input{margin-bottom:14px}
+.variant-continue-btn{width:100%;padding:14px;font-size:16px;font-weight:600}
+.sell-scroll::-webkit-scrollbar{width:5px}
+.sell-scroll::-webkit-scrollbar-track{background:#f1f5f9;border-radius:3px}
+.sell-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-16">
+  <div class="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 text-white py-6 px-4">
+    <div class="max-w-xl mx-auto text-center">
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Sell Your Car at Best Price</h1>
+      <p class="mt-2 text-slate-300 text-sm">Get instant valuation in a few simple steps</p>
+    </div>
+  </div>
+
+  <div class="max-w-xl mx-auto px-4 -mt-6 relative z-10">
+    <div class="sell-card">
+      <div class="sell-breadcrumb empty" id="breadcrumb">Select your car details</div>
+
+      <div class="sell-progress" id="prog">
+        <span class="sell-pill active" id="sp1">Brand</span>
+        <span class="sell-pill wait" id="sp2">Year</span>
+        <span class="sell-pill wait" id="sp3">Model</span>
+        <span class="sell-pill wait" id="sp4">Variant</span>
+        <span class="sell-pill wait" id="sp5">Reg. State</span>
+        <span class="sell-pill wait" id="sp6">KMs</span>
+        <span class="sell-pill wait" id="sp7">Location</span>
+        <span class="sell-pill wait" id="sp8">Timeline</span>
+        <span class="sell-pill wait" id="sp9">Phone</span>
+        <span class="sell-pill wait" id="sp10">Photos</span>
+      </div>
+
+      <div id="sell-success" class="hidden mx-5 mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <p class="text-green-700 text-sm font-medium" id="sell-success-msg"></p>
+      </div>
+      <div id="sell-error" class="hidden mx-5 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p class="text-red-700 text-sm font-medium" id="sell-error-msg"></p>
+      </div>
+
+      <form id="sell-form" action="{% url 'sell_car' %}" method="POST" enctype="multipart/form-data" class="sell-form-inner">
+        {% csrf_token %}
+        <input type="hidden" name="brand" id="h-brand">
+        <input type="hidden" name="model" id="h-model">
+        <input type="hidden" name="year" id="h-year">
+        <input type="hidden" name="fuel_type" id="h-fuel">
+        <input type="hidden" name="transmission" id="h-trans">
+        <input type="hidden" name="variant" id="h-variant">
+        <input type="hidden" name="registration_state" id="h-regstate" value="GJ - Gujarat">
+        <input type="hidden" name="rto_code" id="h-rto">
+        <input type="hidden" name="km_range" id="h-km">
+        <input type="hidden" name="city" id="h-city">
+        <input type="hidden" name="sell_timeline" id="h-timeline">
+        <input type="hidden" name="contact_number" id="h-phone">
+        <input type="hidden" name="body_type" value="Sedan">
+        <input type="hidden" name="ownership" value="1st Owner">
+
+        <div class="sell-steps" id="sell-steps">
+        <!-- STEP 1: BRAND -->
+        <div class="step active" id="s1">
+          <div class="sell-step-body">
+            <h2 class="sell-step-title">Select car brand</h2>
+            <p class="sell-step-sub">Choose your car manufacturer</p>
+            <div class="sell-search">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input type="text" placeholder="Search car brand" id="brand-search" oninput="filterEl('#brand-g .opt-card',this.value,'nm')">
+            </div>
+            <div class="sell-label">Popular Brands</div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[220px] overflow-y-auto sell-scroll" id="brand-g">
+              {% for brand in brands %}
+              <div class="opt-card" data-id="{{ brand.id }}" data-nm="{{ brand.name }}" onclick="pickBrand(this)">
+                <span>{{ brand.name }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: YEAR -->
+        <div class="step" id="s2">
+          <div class="sell-step-body">
+            <h2 class="sell-step-title">Select car manufacturing year</h2>
+            <p class="sell-step-sub">When was your car manufactured?</p>
+            <div class="sell-search">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input type="text" placeholder="Search manufacturing year" id="year-search" oninput="filterEl('#year-g .opt-card',this.value,'nm')">
+            </div>
+            <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-[200px] overflow-y-auto sell-scroll" id="year-g"></div>
+          </div>
+        </div>
+
+        <!-- STEP 3: MODEL -->
+        <div class="step" id="s3">
+          <div class="sell-step-body">
+            <h2 class="sell-step-title">Select car model</h2>
+            <p class="sell-step-sub">Showing models for <span id="lbl-brand" class="font-semibold text-slate-700"></span></p>
+            <div class="sell-search">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input type="text" placeholder="Search car models" id="model-search" oninput="filterEl('#model-g .opt-card',this.value,'nm')">
+            </div>
+            <div class="sell-label">Popular Models</div>
+            <div class="grid grid-cols-2 gap-3 max-h-[240px] overflow-y-auto sell-scroll" id="model-g"></div>
+            <div id="model-load" class="hidden py-12 text-center"><div class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div><p class="text-slate-500 mt-2 text-sm">Loading...</p></div>
+          </div>
+        </div>
+
+        <!-- STEP 4: VARIANT (Fuel → Transmission → Variant) -->
+        <div class="step" id="s4">
+          <div class="sell-step-body">
+            <h2 class="sell-step-title">Select variant</h2>
+            <p class="sell-step-sub">Choose fuel type, transmission and variant</p>
+            <div id="fuel-section">
+              <div class="sell-label">Select fuel type</div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6" id="fuel-g">
+                <div class="fuel-box" data-nm="Petrol" data-v="PETROL" onclick="pickFuel(this)"><div class="icon">⛽</div><span>Petrol</span></div>
+                <div class="fuel-box" data-nm="CNG" data-v="CNG" onclick="pickFuel(this)"><div class="icon">💨</div><span>CNG</span></div>
+                <div class="fuel-box" data-nm="Diesel" data-v="DIESEL" onclick="pickFuel(this)"><div class="icon">🛢️</div><span>Diesel</span></div>
+                <div class="fuel-box" data-nm="Electric" data-v="ELECTRIC" onclick="pickFuel(this)"><div class="icon">🔋</div><span>Electric</span></div>
+              </div>
+            </div>
+            <div id="trans-section" class="hidden">
+              <div class="sell-label">Select transmission</div>
+              <div class="grid grid-cols-2 gap-3 mb-6" id="trans-g">
+                <div class="fuel-box" data-nm="Manual" data-v="MANUAL" onclick="pickTrans(this)"><div class="icon">🔧</div><span>Manual</span></div>
+                <div class="fuel-box" data-nm="Auto" data-v="AUTOMATIC" onclick="pickTrans(this)"><div class="icon">⚙️</div><span>Auto</span></div>
+              </div>
+            </div>
+            <div id="variant-section" class="hidden">
+              <div class="variant-section">
+                <div class="sell-label">Select variant for <span id="lbl-model-variant" class="font-semibold text-slate-700"></span></div>
+                <div class="variant-dropdown">
+                  <button type="button" class="variant-dropdown-btn" id="variant-btn" onclick="toggleVariantDropdown()">
+                    <span id="variant-btn-text">Choose variant (e.g. LXI, VXI, ZXI)</span>
+                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                  <div class="variant-dropdown-panel hidden" id="variant-panel">
+                    <div class="variant-search-wrap">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                      <input type="text" placeholder="Search variant..." id="variant-search" oninput="filterVariantOptions(this.value)">
+                    </div>
+                    <div class="variant-dropdown-list" id="variant-list"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="variant-divider">or type custom</div>
+              <div class="variant-custom">
+                <div class="variant-custom-label">Custom variant name</div>
+                <input type="text" id="variant-input" placeholder="e.g. Special Edition, AMT Plus" class="sell-input">
+                <button type="button" onclick="pickVariantManual()" class="btn-primary variant-continue-btn">Continue with selected variant →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 5: REG. STATE + DISTRICT (combined) -->
+        <div class="step" id="s5">
+          <div class="sell-step-body">
+            <h2 class="sell-step-title">Select registration state & district</h2>
+            <p class="sell-step-sub">Choose your car's registration details</p>
+            <div id="state-section">
+              <div class="sell-label">Select state</div>
+              <div class="grid grid-cols-1 gap-3 mb-6">
+                <div class="state-box" data-nm="Gujarat" data-v="GJ - Gujarat" onclick="pickState(this)">
+                  <span>Gujarat</span>
+                </div>
+              </div>
+            </div>
+            <div id="district-section" class="hidden">
+              <div class="sell-label">Enter RTO code / Select district</div>
+              <div class="sell-search">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" placeholder="Search district (e.g. GJ-01)" id="district-search" oninput="filterEl('#district-g .district-box',this.value,'nm')">
+              </div>
+              <div class="district-grid max-h-[200px] overflow-y-auto sell-scroll" id="district-g"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 6: KMs DRIVEN -->
+        <div class="step" id="s6">
+          <div class="sell-step-body">
+            <h2 class="sell-step-title">Kilometres driven</h2>
+            <p class="sell-step-sub">How much has your car been driven?</p>
+            <div class="sell-search">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input type="text" placeholder="Search km range" id="km-search" oninput="filterEl('#km-g .list-card',this.value,'nm')">
+            </div>
+            <div class="space-y-2 max-h-[220px] overflow-y-auto sell-scroll" id="km-g"></div>
+          </div>
+        </div>
+
+        <!-- STEP 7: CAR LOCATION -->
+        <div class="step" id="s7">
+          <div class="sell-step-body">
+            <h2 class="sell-step-title">Select car location</h2>
+            <p class="sell-step-sub">Which city in Gujarat is your car in?</p>
+            <div class="sell-search">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input type="text" placeholder="Search your city" id="city-search" oninput="filterCities(this.value)">
+            </div>
+            <div class="sell-label mb-2">Popular Cities</div>
+            <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-5" id="metro-g"></div>
+            <div class="sell-label mb-2">All Cities</div>
+            <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[180px] overflow-y-auto sell-scroll" id="city-g"></div>
+          </div>
+        </div>
+
+        <!-- STEP 8: TIMELINE -->
+        <div class="step" id="s8">
+          <div class="sell-step-body">
+            <div id="summary-top" class="text-center mb-6 py-4 border-b border-slate-100">
+              <div class="font-bold text-slate-800" id="car-full-name"></div>
+              <div class="text-sm text-slate-500 mt-1" id="car-sub-info"></div>
+            </div>
+            <h2 class="sell-step-title">When are you planning to sell your car?</h2>
+            <p class="sell-step-sub">This helps us find the best buyers</p>
+            <div class="space-y-3" id="timeline-g">
+              <div class="tl-box" data-v="Within this week" onclick="pickTimeline(this)"><span>🏃</span><span>Within this week</span></div>
+              <div class="tl-box" data-v="By next week" onclick="pickTimeline(this)"><span>📅</span><span>By next week</span></div>
+              <div class="tl-box" data-v="After 2 weeks" onclick="pickTimeline(this)"><span>⏳</span><span>After 2 weeks</span></div>
+              <div class="tl-box" data-v="Just checking price" onclick="pickTimeline(this)"><span>🔍</span><span>Just checking price</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 9: PHONE -->
+        <div class="step" id="s9">
+          <div class="sell-step-body">
+            <div class="flex items-center gap-3 pb-4 mb-4 border-b border-slate-100">
+              <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold" id="phone-brand-icon"></div>
+              <div>
+                <div class="font-semibold text-slate-800" id="phone-car-name"></div>
+                <div class="text-sm text-slate-500" id="phone-car-sub"></div>
+              </div>
+            </div>
+            <h2 class="sell-step-title">Enter your phone number</h2>
+            <p class="sell-step-sub">We'll save the offer for you</p>
+            <div class="flex gap-3 mb-5">
+              <div class="px-4 py-3 bg-slate-100 rounded-lg font-semibold text-slate-600 shrink-0">🇮🇳 +91</div>
+              <input type="tel" id="phone-input" maxlength="10" placeholder="Enter 10-digit number" class="sell-input flex-1" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+            </div>
+            <button type="button" onclick="pickPhone()" class="btn-primary">Get Instant Car Price →</button>
+          </div>
+        </div>
+
+        <!-- STEP 10: PHOTOS -->
+        <div class="step" id="s10">
+          <div class="sell-step-body space-y-6">
+            <h2 class="sell-step-title">Almost done!</h2>
+            <p class="sell-step-sub">Add photos and price to complete your listing</p>
+            <div>
+              <div class="sell-label">Upload car photos (3-20 images)</div>
+              <div class="upload-zone" onclick="document.getElementById('images').click()">
+                <div class="icon-wrap">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14"/></svg>
+                </div>
+                <p class="font-medium text-slate-700">Click to upload</p>
+                <p class="text-sm text-slate-500 mt-1">PNG or JPG, 3-20 images</p>
+                <input id="images" name="images" type="file" class="hidden" multiple accept="image/*" onchange="showPics(this)">
+              </div>
+              <div id="pic-grid" class="grid grid-cols-4 gap-2 mt-3"></div>
+              <p id="pic-num" class="text-sm text-slate-500 mt-1 hidden"></p>
+            </div>
+            <div>
+              <div class="sell-label">Expected price (₹)</div>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-semibold">₹</span>
+                <input type="number" name="price" placeholder="e.g. 450000" class="sell-input pl-10" required>
+              </div>
+            </div>
+            <div>
+              <div class="sell-label">Description (optional)</div>
+              <textarea name="description" rows="3" placeholder="Features, modifications, reason for selling..." class="sell-input resize-none"></textarea>
+            </div>
+            <button type="submit" class="btn-primary">Submit for Approval →</button>
+          </div>
+        </div>
+
+        <!-- STEP 11: THANK YOU (only shown after successful submit) -->
+        <div class="step" id="s11">
+          <div class="sell-step-body" id="sell-thankyou">
+            <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-6 mx-auto">
+              <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2 text-center">Thank You!</h2>
+            <p class="text-slate-600 text-lg mb-1 text-center">Your car details have been submitted. Our team will contact you soon to discuss your car sale.</p>
+            <p class="text-slate-700 font-semibold mb-8 text-center">We'll reach out shortly!</p>
+            <a href="/" class="btn-primary block text-center w-full">Back to Home</a>
+          </div>
+        </div>
+        </div>
+        <div class="sell-footer hidden" id="sell-footer">
+          <button type="button" onclick="go(cur-1)" class="btn-back" aria-label="Go back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="6 6 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="m15 18-6-6 6-6"/></svg>
+            Back
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const T=10;let cur=1;
+const D={brand:'',brandName:'',year:'',model:'',modelName:'',fuel:'',fuelName:'',trans:'',transName:'',variant:'',rto:'',km:'',city:'',timeline:'',phone:'',stateSelected:false};
+
+const GJ_RTOS=['GJ-01 Ahmedabad','GJ-02 Mehsana','GJ-03 Rajkot','GJ-04 Bhavnagar','GJ-05 Surat','GJ-06 Vadodara','GJ-07 Ahmedabad (Central)','GJ-08 Palanpur','GJ-09 Kutch-Bhuj','GJ-10 Jamnagar','GJ-11 Junagadh','GJ-12 Anand','GJ-13 Bharuch','GJ-14 Gandhinagar','GJ-15 Godhra','GJ-16 Himatnagar','GJ-17 Nadiad','GJ-18 Gandhinagar (New)','GJ-19 Amreli','GJ-20 Surendranagar','GJ-21 Navsari','GJ-22 Valsad','GJ-23 Vapi','GJ-24 Patan','GJ-25 Dahod','GJ-26 Narmada','GJ-27 Ahmedabad (West)','GJ-28 Porbandar','GJ-29 Morbi','GJ-30 Dwarka','GJ-31 Botad','GJ-32 Gir Somnath','GJ-33 Chhota Udaipur','GJ-34 Mahisagar','GJ-35 Devbhoomi Dwarka','GJ-36 Aravalli','GJ-37 Dang','GJ-38 Tapi'];
+
+const KM_RANGES=['Upto 10,000 Km','10,000 - 20,000 Km','20,000 - 30,000 Km','30,000 - 40,000 Km','40,000 - 50,000 Km','50,000 - 60,000 Km','60,000 - 70,000 Km','70,000 - 80,000 Km','80,000 - 90,000 Km','90,000 - 1,00,000 Km','1,00,000 - 1,25,000 Km','1,25,000 - 1,50,000 Km','1,50,000 - 1,75,000 Km','1,75,000 - 2,00,000 Km','2,00,000 - 2,25,000 Km','2,25,000 - 2,50,000 Km','Above 2,50,000 Km'];
+
+
+const MAJOR_CITIES=['Ahmedabad','Surat','Vadodara','Rajkot','Gandhinagar','Bhavnagar','Jamnagar','Junagadh','Palanpur','Modasa','Mehsana','Kalol','Himatnagar'];
+const ALL_CITIES=['Amreli','Anand','Ankleshwar','Bardoli','Bharuch','Bhuj','Botad','Chhota Udaipur','Dahod','Daman','Deesa','Dholka','Diu','Dwarka','Gandhidham','Godhra','Halvad','Himatnagar','Jetpur','Kadi','Kalol','Kapadvanj','Keshod','Khambhat','Kutch','Mahuva','Mandvi','Mehsana','Modasa','Morbi','Nadiad','Navsari','Okha','Palanpur','Patan','Petlad','Porbandar','Sanand','Sidhpur','Somnath','Surendranagar','Tapi','Una','Unjha','Upleta','Valsad','Vapi','Veraval','Viramgam','Visnagar','Vyara','Wadhwan','Wankaner'];
+
+function updateBreadcrumb(){
+  const parts=[D.brandName,D.year,D.modelName,D.variant].filter(Boolean);
+  const el=document.getElementById('breadcrumb');
+  el.textContent=parts.length?parts.join(' '):'Select your car details';
+  el.classList.toggle('empty',!parts.length);
+}
+
+function prog(){
+  for(let i=1;i<=T;i++){
+    const el=document.getElementById('sp'+i);
+    if(el)el.className='sell-pill '+(i<cur?'done':i===cur?'active':'wait');
+  }
+}
+
+function go(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s'+n).classList.add('active');
+  cur=n;prog();updateBreadcrumb();
+  const footer=document.getElementById('sell-footer');
+  if(footer)footer.classList.toggle('hidden',cur<=1||cur===11);
+  document.getElementById('sell-steps').scrollTop=0;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function filterEl(selector,q,attr){
+  q=q.toLowerCase();
+  document.querySelectorAll(selector).forEach(c=>{
+    c.style.display=!q||c.dataset[attr].toLowerCase().includes(q)?'':'none';
+  });
+}
+
+function pickBrand(el){
+  if(el.classList.contains('selected')){
+    el.classList.remove('selected');
+    D.brand='';D.brandName='';
+    document.getElementById('h-brand').value='';
+    document.getElementById('lbl-brand').textContent='';
+    updateBreadcrumb();
+    return;
+  }
+  document.querySelectorAll('#brand-g .opt-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  D.brand=el.dataset.id;D.brandName=el.dataset.nm;
+  document.getElementById('h-brand').value=D.brand;
+  document.getElementById('lbl-brand').textContent=D.brandName;
+  setTimeout(()=>go(2),200);
+}
+
+(function(){
+  const g=document.getElementById('year-g');
+  const now=new Date().getFullYear();
+  for(let y=now;y>=2000;y--){
+    const d=document.createElement('div');
+    d.className='opt-card';
+    d.dataset.nm=String(y);d.dataset.v=String(y);
+    d.innerHTML='<span>'+y+'</span>';
+    d.onclick=function(){
+      if(this.classList.contains('selected')){
+        this.classList.remove('selected');
+        D.year='';
+        document.getElementById('h-year').value='';
+        updateBreadcrumb();
+        return;
+      }
+      document.querySelectorAll('#year-g .opt-card').forEach(c=>c.classList.remove('selected'));
+      this.classList.add('selected');
+      D.year=String(y);
+      document.getElementById('h-year').value=D.year;
+      loadModels();
+      setTimeout(()=>go(3),200);
+    };
+    g.appendChild(d);
+  }
+})();
+
+function loadModels(){
+  const g=document.getElementById('model-g');
+  const ld=document.getElementById('model-load');
+  g.innerHTML='';ld.classList.remove('hidden');
+  fetch('{% url "api_get_models" %}?brand_id='+D.brand).then(r=>r.json()).then(models=>{
+    ld.classList.add('hidden');
+    models.forEach(m=>{
+      const d=document.createElement('div');
+      d.className='opt-card';
+      d.dataset.id=m.id;d.dataset.nm=m.name;
+      d.innerHTML='<span>'+m.name+'</span>';
+      d.onclick=function(){
+        if(this.classList.contains('selected')){
+          this.classList.remove('selected');
+          D.model='';D.modelName='';
+          document.getElementById('h-model').value='';
+          resetVariantStep();
+          updateBreadcrumb();
+          return;
+        }
+        document.querySelectorAll('#model-g .opt-card').forEach(c=>c.classList.remove('selected'));
+        this.classList.add('selected');
+        D.model=String(m.id);D.modelName=m.name;
+        document.getElementById('h-model').value=D.model;
+        resetVariantStep();
+        setTimeout(()=>go(4),200);
+      };
+      g.appendChild(d);
+    });
+  });
+}
+
+function resetVariantStep(){
+  document.getElementById('trans-section').classList.add('hidden');
+  document.getElementById('variant-section').classList.add('hidden');
+  document.querySelectorAll('#fuel-g .fuel-box,#trans-g .fuel-box').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('variant-input').value='';
+  document.getElementById('variant-btn-text').textContent='Choose variant (e.g. LXI, VXI, ZXI)';
+  document.getElementById('variant-panel').classList.add('hidden');
+  document.getElementById('variant-btn').classList.remove('open');
+  document.getElementById('variant-search').value='';
+}
+function pickFuel(el){
+  if(el.classList.contains('selected')){
+    el.classList.remove('selected');
+    D.fuel='';D.fuelName='';
+    document.getElementById('h-fuel').value='';
+    document.getElementById('trans-section').classList.add('hidden');
+    document.getElementById('variant-section').classList.add('hidden');
+    return;
+  }
+  document.querySelectorAll('#fuel-g .fuel-box').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  D.fuel=el.dataset.v;D.fuelName=el.dataset.nm;
+  document.getElementById('h-fuel').value=D.fuel;
+  document.getElementById('trans-section').classList.remove('hidden');
+  document.getElementById('variant-section').classList.add('hidden');
+  document.querySelectorAll('#trans-g .fuel-box').forEach(c=>c.classList.remove('selected'));
+}
+function pickTrans(el){
+  if(el.classList.contains('selected')){
+    el.classList.remove('selected');
+    D.trans='';D.transName='';
+    document.getElementById('h-trans').value='';
+    document.getElementById('variant-section').classList.add('hidden');
+    return;
+  }
+  document.querySelectorAll('#trans-g .fuel-box').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  D.trans=el.dataset.v;D.transName=el.dataset.nm;
+  document.getElementById('h-trans').value=D.trans;
+  document.getElementById('variant-section').classList.remove('hidden');
+  document.getElementById('variant-input').value='';
+  document.getElementById('variant-btn-text').textContent='Choose variant (e.g. LXI, VXI, ZXI)';
+  document.getElementById('variant-search').value='';
+  var lbl=document.getElementById('lbl-model-variant');
+  if(lbl)lbl.textContent=D.modelName||'your model';
+  buildVariantList();
+}
+function buildVariantList(){
+  const list=document.getElementById('variant-list');
+  list.innerHTML='<div class="p-4 text-center text-slate-500 text-sm">Loading variants...</div>';
+  fetch('{% url "api_get_variants" %}?model_id='+D.model).then(r=>r.json()).then(variants=>{
+    list.innerHTML='';
+    if(!variants||variants.length===0){
+      list.innerHTML='<div class="p-4 text-center text-slate-500 text-sm">No variants found. Use custom below.</div>';
+      return;
+    }
+    variants.forEach(v=>{
+      const d=document.createElement('div');
+      d.className='variant-option';
+      d.dataset.nm=v;
+      d.textContent=v;
+      d.onclick=function(){pickVariantFromList(v);};
+      list.appendChild(d);
+    });
+  }).catch(()=>{
+    list.innerHTML='<div class="p-4 text-center text-slate-500 text-sm">Could not load. Use custom below.</div>';
+  });
+}
+function toggleVariantDropdown(){
+  const btn=document.getElementById('variant-btn');
+  const panel=document.getElementById('variant-panel');
+  const isOpen=!panel.classList.contains('hidden');
+  if(isOpen){panel.classList.add('hidden');btn.classList.remove('open');}
+  else{panel.classList.remove('hidden');btn.classList.add('open');document.getElementById('variant-search').focus();}
+}
+function filterVariantOptions(q){
+  q=q.toLowerCase();
+  document.querySelectorAll('#variant-list .variant-option').forEach(c=>{
+    c.style.display=!q||(c.dataset.nm||'').toLowerCase().includes(q)?'':'none';
+  });
+}
+function pickVariantFromList(v){
+  D.variant=v;
+  document.getElementById('h-variant').value=v;
+  document.getElementById('variant-btn-text').textContent=v;
+  document.getElementById('variant-input').value='';
+  document.getElementById('variant-panel').classList.add('hidden');
+  document.getElementById('variant-btn').classList.remove('open');
+  document.getElementById('variant-search').value='';
+  go(5);
+}
+function pickVariantManual(){
+  const v=document.getElementById('variant-input').value.trim();
+  if(!v){document.getElementById('variant-input').focus();return;}
+  D.variant=v;
+  document.getElementById('h-variant').value=v;
+  document.getElementById('variant-btn-text').textContent=v;
+  go(5);
+}
+
+function pickState(el){
+  if(el.classList.contains('selected')){
+    el.classList.remove('selected');
+    D.stateSelected=false;
+    document.getElementById('h-regstate').value='GJ - Gujarat';
+    document.getElementById('district-section').classList.add('hidden');
+    return;
+  }
+  document.querySelectorAll('.state-box').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  D.stateSelected=true;
+  document.getElementById('h-regstate').value=el.dataset.v;
+  document.getElementById('district-section').classList.remove('hidden');
+  buildDistricts();
+}
+
+function buildDistricts(){
+  const g=document.getElementById('district-g');
+  g.innerHTML='';
+  GJ_RTOS.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='district-box';
+    d.dataset.nm=r;d.dataset.v=r;
+    d.innerHTML='<span>'+r+'</span>';
+    d.onclick=function(){
+      if(this.classList.contains('selected')){
+        this.classList.remove('selected');
+        D.rto='';
+        document.getElementById('h-rto').value='';
+        updateBreadcrumb();
+        return;
+      }
+      document.querySelectorAll('#district-g .district-box').forEach(c=>c.classList.remove('selected'));
+      this.classList.add('selected');
+      D.rto=r;
+      document.getElementById('h-rto').value=r;
+      buildKms();
+      setTimeout(()=>go(6),200);
+    };
+    g.appendChild(d);
+  });
+}
+
+function buildKms(){
+  const g=document.getElementById('km-g');
+  if(g.children.length)return;
+  KM_RANGES.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='list-card';
+    d.dataset.nm=r;d.dataset.v=r;
+    d.innerHTML='<span>'+r+'</span>';
+    d.onclick=function(){
+      if(this.classList.contains('selected')){
+        this.classList.remove('selected');
+        D.km='';
+        document.getElementById('h-km').value='';
+        updateBreadcrumb();
+        return;
+      }
+      document.querySelectorAll('#km-g .list-card').forEach(c=>c.classList.remove('selected'));
+      this.classList.add('selected');
+      D.km=r;
+      document.getElementById('h-km').value=r;
+      buildCities();
+      setTimeout(()=>go(7),200);
+    };
+    g.appendChild(d);
+  });
+}
+
+function buildCities(){
+  const mg=document.getElementById('metro-g');
+  const cg=document.getElementById('city-g');
+  if(mg.children.length)return;
+  MAJOR_CITIES.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='city-box';
+    d.dataset.nm=c;d.dataset.v=c;
+    d.innerHTML='<span>'+c+'</span>';
+    d.onclick=function(){pickCity(c,this);};
+    mg.appendChild(d);
+  });
+  ALL_CITIES.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='city-box';
+    d.dataset.nm=c;d.dataset.v=c;
+    d.innerHTML='<span>'+c+'</span>';
+    d.onclick=function(){pickCity(c,this);};
+    cg.appendChild(d);
+  });
+}
+function pickCity(c,el){
+  if(el.classList.contains('selected')){
+    el.classList.remove('selected');
+    D.city='';
+    document.getElementById('h-city').value='';
+    updateBreadcrumb();
+    return;
+  }
+  document.querySelectorAll('#metro-g .city-box,#city-g .city-box').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected');
+  D.city=c;document.getElementById('h-city').value=c;
+  updateBreadcrumb();
+  document.getElementById('car-full-name').textContent=[D.brandName,D.year,D.modelName,D.variant].filter(Boolean).join(' ');
+  document.getElementById('car-sub-info').textContent=['GJ - Gujarat',D.rto,D.km,D.city].filter(Boolean).join(' | ');
+  setTimeout(()=>go(8),200);
+}
+function filterCities(q){
+  q=q.toLowerCase();
+  document.querySelectorAll('#metro-g .city-box,#city-g .city-box').forEach(c=>{
+    c.style.display=!q||c.dataset.nm.toLowerCase().includes(q)?'':'none';
+  });
+}
+
+function pickTimeline(el){
+  if(el.classList.contains('selected')){
+    el.classList.remove('selected');
+    D.timeline='';
+    document.getElementById('h-timeline').value='';
+    return;
+  }
+  document.querySelectorAll('#timeline-g .tl-box').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  D.timeline=el.dataset.v;
+  document.getElementById('h-timeline').value=D.timeline;
+  document.getElementById('phone-brand-icon').textContent=D.brandName?D.brandName[0]:'';
+  document.getElementById('phone-car-name').textContent=[D.brandName,D.year,D.modelName,D.variant].filter(Boolean).join(' ');
+  document.getElementById('phone-car-sub').textContent=[D.year,D.fuelName,D.rto].filter(Boolean).join(' | ');
+  setTimeout(()=>go(9),200);
+}
+
+function pickPhone(){
+  const v=document.getElementById('phone-input').value.trim();
+  if(v.length!==10){alert('Please enter a valid 10-digit phone number');return;}
+  D.phone=v;
+  document.getElementById('h-phone').value='+91'+v;
+  go(10);
+}
+
+document.addEventListener('click', function(e){
+  const panel=document.getElementById('variant-panel');
+  const btn=document.getElementById('variant-btn');
+  if(panel&&!panel.classList.contains('hidden')&&!panel.contains(e.target)&&!btn.contains(e.target)){
+    panel.classList.add('hidden');
+    btn.classList.remove('open');
+  }
+});
+
+function showPics(input){
+  const g=document.getElementById('pic-grid');
+  const n=document.getElementById('pic-num');
+  g.innerHTML='';
+  n.textContent=input.files.length+' photo(s) selected';
+  n.classList.remove('hidden');
+  Array.from(input.files).forEach(f=>{
+    const r=new FileReader();
+    r.onload=function(e){
+      const d=document.createElement('div');
+      d.className='aspect-square rounded-lg overflow-hidden border border-slate-200';
+      d.innerHTML='<img src="'+e.target.result+'" class="w-full h-full object-cover">';
+      g.appendChild(d);
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+document.getElementById('sell-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const minImg={{ min_images }};
+  const maxImg={{ max_images }};
+  const count=document.getElementById('images').files.length;
+  if(count<minImg){
+    document.getElementById('sell-error').classList.remove('hidden');
+    document.getElementById('sell-error-msg').textContent='Please upload at least '+minImg+' images.';
+    document.getElementById('sell-success').classList.add('hidden');
+    return;
+  }
+  if(count>maxImg){
+    document.getElementById('sell-error').classList.remove('hidden');
+    document.getElementById('sell-error-msg').textContent='You can upload maximum '+maxImg+' images.';
+    document.getElementById('sell-success').classList.add('hidden');
+    return;
+  }
+  const btn=this.querySelector('button[type="submit"]');
+  const origText=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='Submitting...';
+  document.getElementById('sell-success').classList.add('hidden');
+  document.getElementById('sell-error').classList.add('hidden');
+  fetch('{% url "sell_car" %}', {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    body: new FormData(this)
+  }).then(r=>r.json().then(d=>({ok:r.ok,data:d}))).then(res=>{
+    btn.disabled=false;
+    btn.textContent=origText;
+    if(res.ok){
+      if(cur===10){
+        go(11);
+        document.getElementById('prog').classList.add('hidden');
+        document.getElementById('breadcrumb').classList.add('hidden');
+        document.getElementById('sell-footer').classList.add('hidden');
+      }
+    }else{
+      document.getElementById('sell-error-msg').textContent=res.data.message||'Something went wrong.';
+      document.getElementById('sell-error').classList.remove('hidden');
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  }).catch(()=>{
+    btn.disabled=false;
+    btn.textContent=origText;
+    document.getElementById('sell-error-msg').textContent='Something went wrong. Please try again.';
+    document.getElementById('sell-error').classList.remove('hidden');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+</script>
+{% endblock %}

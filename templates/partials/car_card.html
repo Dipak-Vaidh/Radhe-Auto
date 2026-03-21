@@ -1,0 +1,67 @@
+{% comment %}
+  GLOBAL CAR CARD COMPONENT
+  Usage:
+    Carousel (home, recent): {% include 'partials/car_card.html' with car=car wishlisted_ids=wishlisted_ids %}
+    Grid (car list):        {% include 'partials/car_card.html' with car=car wishlisted_ids=wishlisted_ids variant="grid" %}
+    Wishlist:              {% include 'partials/car_card.html' with car=car in_wishlist=True %}
+  Edit this file to change card layout, styling, or buttons site-wide.
+{% endcomment %}
+{% if variant == "grid" %}
+{# Grid variant - used in car list page #}
+<article class="bg-white rounded-xl md:rounded-2xl border border-gray-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow group h-full max-w-full cursor-pointer" data-car-url="{% url 'car_detail' car.pk %}" onclick="var u=this.getAttribute('data-car-url');if(u)location.href=u;">
+    <div class="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+        {% if car.primary_image %}
+        <img src="{{ car.primary_image.display_url }}" alt="{{ car.title }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+        {% else %}
+        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="text-gray-400"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
+        </div>
+        {% endif %}
+        <a href="{% if user.is_authenticated %}{% url 'toggle_wishlist' car.pk %}?next={{ request.path|urlencode }}{% else %}{% url 'login' %}?next={{ request.path|urlencode }}{% endif %}" class="absolute top-2 right-2 md:top-4 md:right-4 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 transition-colors shadow-sm no-underline" onclick="event.stopPropagation()">
+            {% if in_wishlist or wishlisted_ids and car.pk in wishlisted_ids %}
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 text-rose-500"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+            {% else %}
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+            {% endif %}
+        </a>
+        <span class="absolute top-2 left-2 md:top-4 md:left-4 text-[10px] md:text-xs font-medium px-2 py-0.5 md:px-2.5 md:py-1 rounded-full {% if car.ownership == '1st Owner' %}bg-green-500 text-white{% else %}bg-gray-200 text-gray-700{% endif %}">{{ car.ownership }}</span>
+    </div>
+    <div class="p-3 md:p-4 flex flex-col flex-1 min-h-0">
+        <h2 class="font-medium text-sm md:text-base text-gray-900 line-clamp-2">{{ car.title }}</h2>
+        <p class="text-xs md:text-sm text-gray-500 mt-1 truncate">{{ car.specs_short }}</p>
+        <p class="text-base md:text-lg font-semibold text-gray-900 mt-2 mb-3">{{ car.price_display }}</p>
+        <div class="mt-auto flex gap-2" onclick="event.stopPropagation()">
+            <a href="{% url 'car_detail' car.pk %}" class="flex-1 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs md:text-sm font-medium transition-colors no-underline" onclick="event.stopPropagation()">Book Now</a>
+            <button type="button" class="share-btn px-3 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg text-xs md:text-sm font-medium transition-colors py-2 flex items-center justify-center" data-share-url="{% url 'car_detail' car.pk %}" data-share-title="{{ car.title }} - {{ car.price_display }}" onclick="event.stopPropagation(); event.preventDefault(); if(window.doShare) window.doShare(this); return false;">Share</button>
+        </div>
+    </div>
+</article>
+{% else %}
+{# Carousel variant (default) - used in home featured, recent, AJAX #}
+<div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 group cursor-pointer" data-car-url="{% url 'car_detail' car.pk %}" onclick="var u=this.getAttribute('data-car-url');if(u)location.href=u;">
+    <div class="relative aspect-[4/3] rounded-xl overflow-hidden mb-3">
+        {% if car.primary_image %}
+        <img src="{{ car.primary_image.display_url }}" alt="{{ car.title }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+        {% else %}
+        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="text-gray-400"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
+        </div>
+        {% endif %}
+        <a href="{% if user.is_authenticated %}{% url 'toggle_wishlist' car.pk %}?next={{ request.path|urlencode }}{% else %}{% url 'login' %}?next={{ request.path|urlencode }}{% endif %}" class="absolute top-3 right-3 bg-white/90 p-2 rounded-full text-gray-400 hover:text-rose-500 transition-colors shadow-sm no-underline" onclick="event.stopPropagation()">
+            {% if in_wishlist or wishlisted_ids and car.pk in wishlisted_ids %}
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 text-rose-500"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+            {% else %}
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"></path></svg>
+            {% endif %}
+        </a>
+        <span class="absolute top-3 left-3 text-[10px] sm:text-xs font-medium px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full {% if car.ownership == '1st Owner' %}bg-green-500 text-white{% else %}bg-gray-200 text-gray-700{% endif %}">{{ car.ownership }}</span>
+    </div>
+    <h3 class="font-medium text-sm sm:text-base text-gray-900 line-clamp-2">{{ car.title }}</h3>
+    <p class="text-xs sm:text-sm text-gray-500 mt-1 truncate">{{ car.specs_short }}</p>
+    <p class="text-lg sm:text-xl font-semibold text-gray-900 mt-2 mb-3">{{ car.price_display }}</p>
+    <div class="flex gap-2 sm:gap-3">
+        <a href="{% url 'car_detail' car.pk %}" class="flex-1 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors no-underline" onclick="event.stopPropagation()">Book Now</a>
+        <button type="button" class="share-btn px-3 sm:px-5 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg text-xs sm:text-sm font-medium transition-colors py-2 sm:py-2.5" data-share-url="{% url 'car_detail' car.pk %}" data-share-title="{{ car.title }} - {{ car.price_display }}" onclick="event.stopPropagation(); event.preventDefault(); if(window.doShare) window.doShare(this); return false;">Share</button>
+    </div>
+</div>
+{% endif %}

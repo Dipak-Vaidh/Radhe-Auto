@@ -1,0 +1,22 @@
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="flex items-center justify-center gap-2 mt-8 mb-4 flex-wrap" aria-label="Pagination">
+    {% if page_obj.has_previous %}
+    <a href="#" class="pagination-link px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors no-underline" data-page="{{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+
+    <div class="flex items-center gap-1">
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+        <span class="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium">{{ num }}</span>
+            {% else %}
+        <a href="#" class="pagination-link px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors no-underline" data-page="{{ num }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_next %}
+    <a href="#" class="pagination-link px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors no-underline" data-page="{{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</nav>
+<p class="text-center text-sm text-gray-500 mt-2">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} cars total)</p>
+{% endif %}

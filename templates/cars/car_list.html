@@ -1,0 +1,1035 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Buy Cars - Radhe Cars{% endblock %}
+
+{% block extra_css %}
+<style>
+.filter-scroll::-webkit-scrollbar { width: 4px; }
+.filter-scroll::-webkit-scrollbar-track { background: transparent; }
+.filter-scroll::-webkit-scrollbar-thumb { background: #2563eb; border-radius: 99px; }
+.filter-scroll::-webkit-scrollbar-thumb:hover { background: #1d4ed8; }
+
+.cars-scroll::-webkit-scrollbar { width: 6px; }
+.cars-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 99px; }
+.cars-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 99px; }
+.cars-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+.dual-range { position: relative; height: 6px; }
+.dual-range .track-bg { position: absolute; inset: 0; background: #f3f4f6; border-radius: 9999px; }
+.dual-range .track-fill { position: absolute; top: 0; bottom: 0; border-radius: 9999px; }
+.dual-range input[type="range"] {
+    position: absolute; width: 100%; top: -5px; height: 16px;
+    -webkit-appearance: none; appearance: none;
+    background: transparent; pointer-events: none; z-index: 2; margin: 0;
+}
+.dual-range input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    cursor: grab; pointer-events: all; border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+.dual-range input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    cursor: grab; pointer-events: all; border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+.dual-range.purple input[type="range"]::-webkit-slider-thumb { background: #2563eb; }
+.dual-range.purple input[type="range"]::-moz-range-thumb { background: #2563eb; }
+.dual-range.purple .track-fill { background: #2563eb; }
+.dual-range.blue input[type="range"]::-webkit-slider-thumb { background: #2563eb; }
+.dual-range.blue input[type="range"]::-moz-range-thumb { background: #2563eb; }
+.dual-range.blue .track-fill { background: #2563eb; }
+
+.collapsible-body { overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; }
+.collapsible-body.collapsed { max-height: 0 !important; opacity: 0; }
+.collapse-arrow { transition: transform 0.3s ease; }
+.collapse-arrow.rotated { transform: rotate(180deg); }
+
+@media (max-width: 1023px) {
+    #filter-sidebar { display: none !important; }
+    main { overflow-x: hidden; }
+    #car-grid > div { width: 100% !important; max-width: 100% !important; }
+}
+@media (min-width: 1024px) {
+    #mobile-filter-bar { display: none !important; }
+    #mobile-filter-spacer { display: none !important; }
+}
+#mobile-filter-section { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 10px 0 12px 0; margin: 0; z-index: 40; position: fixed; left: 0; right: 0; top: 56px; box-shadow: 0 1px 0 0 rgba(0,0,0,0.05); }
+@media (min-width: 1024px) { #mobile-filter-section { position: relative; top: auto; left: auto; right: auto; } }
+#mobile-filter-spacer { height: 66px; flex-shrink: 0; }
+#mobile-filter-bar { overflow-x: auto; overflow-y: visible; width: 100%; max-width: 100%; -webkit-overflow-scrolling: touch; padding: 0 1rem; }
+.mobile-filter-bar { display: flex; gap: 8px; padding: 0 0.5rem 0 0; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.mobile-filter-bar::-webkit-scrollbar { display: none; }
+.mobile-filter-chip { flex-shrink: 0; position: relative; z-index: 9999; }
+.mobile-filter-chip .chip-btn { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 9999px; background: #fff; font-size: 13px; font-weight: 500; color: #334155; cursor: pointer; white-space: nowrap; min-height: 44px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.mobile-filter-chip .chip-btn:hover { border-color: #cbd5e1; background: #f8fafc; }
+.mobile-filter-chip .chip-btn.active { border-color: #2563eb; background: #eff6ff; color: #1e40af; }
+.mobile-filter-chip .chip-dropdown { position: fixed; min-width: 200px; max-height: 60vh; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,.3); z-index: 99999; display: none; }
+.mobile-filter-chip .chip-dropdown.open { display: block; }
+.mobile-filter-chip .chip-opt { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 14px; font-size: 14px; color: #334155; cursor: pointer; border: none; background: none; text-align: left; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.mobile-filter-chip .chip-opt:hover { background: #f1f5f9; }
+.mobile-filter-chip .chip-opt .chip-x { padding: 2px; opacity: 0.6; }
+.mobile-filter-chip .chip-opt .chip-x:hover { opacity: 1; color: #dc2626; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 md:pb-8 flex flex-col lg:flex-row gap-6 md:gap-8 items-start w-full min-w-0">
+
+    <!-- Sidebar Filters (desktop only - hidden on mobile) -->
+    <div class="hidden lg:flex w-full lg:w-[280px] xl:w-[300px] shrink-0 lg:self-stretch lg:bg-gray-50 flex-col {% if request.GET.q %}lg:hidden{% endif %}">
+        <aside id="filter-sidebar" class="w-full bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col gap-0 overflow-x-auto overflow-y-hidden lg:overflow-x-visible lg:overflow-y-auto max-h-[calc(100vh-6rem)] filter-scroll lg:sticky lg:top-24 lg:self-start mobile-filter-scroll">
+
+        <form id="filter-form">
+        <input type="hidden" name="page" id="page-input" value="{{ request.GET.page|default:1 }}">
+        <input type="hidden" name="q" id="filter-q" value="{{ request.GET.q|default:'' }}">
+        <input type="hidden" name="sort" id="sort-input" value="{{ request.GET.sort|default:'relevance' }}">
+        <input type="hidden" name="per_page" id="per-page-input" value="{{ request.GET.per_page|default:30 }}">
+        <!-- Mobile filter inputs (always in DOM, updated by mobile filter bar) -->
+        <input type="hidden" name="brand" id="mf-brand" value="{{ request.GET.brand|default:'' }}">
+        <input type="hidden" name="model" id="mf-model" value="{{ request.GET.model|default:'' }}">
+        <input type="hidden" name="body_type" id="mf-body_type" value="{{ request.GET.body_type|default:'' }}">
+        <input type="hidden" name="fuel" id="mf-fuel" value="{{ request.GET.fuel|default:'' }}">
+        <input type="hidden" name="transmission" id="mf-transmission" value="{{ request.GET.transmission|default:'' }}">
+        <input type="hidden" name="ownership" id="mf-ownership" value="{{ request.GET.ownership|default:'' }}">
+        <input type="hidden" name="min_price" id="mf-min_price" value="{{ request.GET.min_price|default:'' }}">
+        <input type="hidden" name="max_price" id="mf-max_price" value="{{ request.GET.max_price|default:'' }}">
+        <input type="hidden" name="min_year" id="mf-min_year" value="{{ request.GET.min_year|default:'' }}">
+        <input type="hidden" name="max_year" id="mf-max_year" value="{{ request.GET.max_year|default:'' }}">
+        <input type="hidden" name="min_km" id="mf-min_km" value="{{ request.GET.min_km|default:'' }}">
+        <input type="hidden" name="max_km" id="mf-max_km" value="{{ request.GET.max_km|default:'' }}">
+
+        <div class="mobile-filter-row">
+        <!-- Price Range -->
+        <div class="filter-block border-b border-gray-100 pb-8 lg:pb-8">
+            <h3 class="text-base font-semibold text-gray-900 mb-6">Price Range</h3>
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-sm font-semibold text-blue-600" id="price-min-label">₹ 50,000</span>
+                <span class="text-sm font-semibold text-blue-600" id="price-max-label">₹ 70,00,000</span>
+            </div>
+            <div class="dual-range purple">
+                <div class="track-bg"></div>
+                <div class="track-fill" id="price-fill"></div>
+                <input type="range" name="min_price" min="50000" max="7000000" value="50000" step="10000" id="price-min" class="range-min">
+                <input type="range" name="max_price" min="50000" max="7000000" value="7000000" step="10000" id="price-max" class="range-max">
+            </div>
+            <div class="flex justify-between text-xs text-gray-500 mt-3">
+                <span>Minimum</span>
+                <span>Maximum</span>
+            </div>
+        </div>
+
+        <!-- Brands + Models -->
+        <div class="filter-block border-b border-gray-100 pb-8 pt-8">
+            <h3 class="text-base font-semibold text-gray-900 mb-5">Brands + Models</h3>
+            <div class="relative mb-6">
+                <input type="text" id="brand-search" placeholder="Search by car make, model..." class="w-full bg-white border border-gray-200 rounded-lg py-2.5 pl-4 pr-12 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors">
+                <button type="button" id="filter-search-btn" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 text-gray-500"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                </button>
+            </div>
+            <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">Top Brands</p>
+            <div class="space-y-1 max-h-[320px] overflow-y-auto filter-scroll" id="brand-list">
+                {% for brand in brands %}
+                <div class="brand-item" data-brand-id="{{ brand.id }}">
+                    <div class="flex items-center justify-between group">
+                        <label class="flex items-center gap-3 cursor-pointer flex-1 py-1.5">
+                            <div class="relative flex items-center justify-center w-[18px] h-[18px] shrink-0">
+                                <input type="checkbox" name="brand" value="{{ brand.name }}" {% if request.GET.brand == brand.name %}checked{% endif %} class="peer sr-only filter-input brand-cb" data-brand-id="{{ brand.id }}">
+                                <div class="w-[18px] h-[18px] border-[1.5px] border-gray-300 rounded-[4px] peer-checked:bg-blue-600 peer-checked:border-blue-600 bg-white transition-colors"></div>
+                                <svg class="absolute text-white w-3 h-3 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                            <span class="text-base text-gray-700">{{ brand.name }}</span>
+                        </label>
+                        <button type="button" class="brand-expand p-1 rounded hover:bg-gray-100 transition-colors shrink-0" data-brand-id="{{ brand.id }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 text-gray-400 group-hover:text-gray-900 transition-all duration-200 brand-chevron"><path d="m6 9 6 6 6-6"></path></svg>
+                        </button>
+                    </div>
+                    <div class="models-list hidden pl-8 pb-2 space-y-1" id="models-{{ brand.id }}"></div>
+                </div>
+                {% endfor %}
+            </div>
+            <input type="hidden" name="model" id="model-filter" value="">
+        </div>
+
+        <!-- Kms Driven -->
+        <div class="filter-block border-b border-gray-100 pb-8 pt-8">
+            <div class="flex justify-between items-center mb-6 cursor-pointer" onclick="toggleSection('km')">
+                <h3 class="text-base font-semibold text-gray-900">Kms Driven</h3>
+                <div class="bg-gray-50 rounded-full p-1 hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 text-gray-500 collapse-arrow" id="km-arrow"><path d="m18 15-6-6-6 6"></path></svg>
+                </div>
+            </div>
+            <div class="collapsible-body" id="km-body" style="max-height:200px;">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-sm font-semibold text-blue-600" id="km-min-label">0 Km</span>
+                    <span class="text-sm font-semibold text-blue-600" id="km-max-label">5,00,000 Km</span>
+                </div>
+                <div class="dual-range blue">
+                    <div class="track-bg"></div>
+                    <div class="track-fill" id="km-fill"></div>
+                    <input type="range" name="min_km" min="0" max="500000" value="0" step="5000" id="km-min" class="range-min">
+                    <input type="range" name="max_km" min="0" max="500000" value="500000" step="5000" id="km-max" class="range-max">
+                </div>
+                <div class="flex justify-between text-xs text-gray-400 mt-3">
+                    <span>Minimum</span>
+                    <span>Maximum</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Year -->
+        <div class="filter-block border-b border-gray-100 pb-8 pt-8">
+            <div class="flex justify-between items-center mb-6 cursor-pointer" onclick="toggleSection('year')">
+                <h3 class="text-base font-semibold text-gray-900">Model Year</h3>
+                <div class="bg-gray-50 rounded-full p-1 hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 text-gray-500 collapse-arrow" id="year-arrow"><path d="m18 15-6-6-6 6"></path></svg>
+                </div>
+            </div>
+            <div class="collapsible-body" id="year-body" style="max-height:200px;">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-sm font-semibold text-blue-600" id="year-min-label">2005</span>
+                    <span class="text-sm font-semibold text-blue-600" id="year-max-label">2026</span>
+                </div>
+                <div class="dual-range blue">
+                    <div class="track-bg"></div>
+                    <div class="track-fill" id="year-fill"></div>
+                    <input type="range" name="min_year" min="2005" max="2026" value="2005" step="1" id="year-min" class="range-min">
+                    <input type="range" name="max_year" min="2005" max="2026" value="2026" step="1" id="year-max" class="range-max">
+                </div>
+                <div class="flex justify-between text-xs text-gray-400 mt-3">
+                    <span>Minimum</span>
+                    <span>Maximum</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Body Type -->
+        <div class="filter-block border-b border-gray-100 pb-8 pt-8">
+            <h3 class="text-base font-semibold text-gray-900 mb-6">Body Type</h3>
+            <div class="space-y-4">
+                {% for value, label in body_types %}
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <div class="relative flex items-center justify-center w-[18px] h-[18px] shrink-0">
+                        <input type="checkbox" name="body_type" value="{{ value }}" {% if request.GET.body_type == value %}checked{% endif %} class="peer sr-only filter-input">
+                        <div class="w-[18px] h-[18px] border-[1.5px] border-gray-300 rounded-[4px] peer-checked:bg-blue-600 peer-checked:border-blue-600 bg-white transition-colors"></div>
+                        <svg class="absolute text-white w-3 h-3 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span class="text-base text-gray-700">{{ label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Fuel Type -->
+        <div class="filter-block border-b border-gray-100 pb-8 pt-8">
+            <h3 class="text-base font-semibold text-gray-900 mb-6">Fuel Type</h3>
+            <div class="space-y-4">
+                {% for value, label in fuel_types %}
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <div class="relative flex items-center justify-center w-[18px] h-[18px] shrink-0">
+                        <input type="checkbox" name="fuel" value="{{ value }}" {% if request.GET.fuel == value %}checked{% endif %} class="peer sr-only filter-input">
+                        <div class="w-[18px] h-[18px] border-[1.5px] border-gray-300 rounded-[4px] peer-checked:bg-blue-600 peer-checked:border-blue-600 bg-white transition-colors"></div>
+                        <svg class="absolute text-white w-3 h-3 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span class="text-base text-gray-700">{{ label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Transmission -->
+        <div class="filter-block border-b border-gray-100 pb-8 pt-8">
+            <div class="flex justify-between items-center mb-6 cursor-pointer" onclick="toggleSection('trans')">
+                <h3 class="text-base font-semibold text-gray-900">Transmission</h3>
+                <div class="bg-gray-50 rounded-full p-1 hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 text-gray-500 collapse-arrow" id="trans-arrow"><path d="m18 15-6-6-6 6"></path></svg>
+                </div>
+            </div>
+            <div class="collapsible-body" id="trans-body" style="max-height:200px;">
+                <div class="space-y-4">
+                    {% for value, label in transmission_types %}
+                    <div class="flex items-center justify-between group cursor-pointer">
+                        <label class="flex items-center gap-3 cursor-pointer flex-1">
+                            <div class="relative flex items-center justify-center w-[18px] h-[18px] shrink-0">
+                                <input type="checkbox" name="transmission" value="{{ value }}" {% if request.GET.transmission == value %}checked{% endif %} class="peer sr-only filter-input">
+                                <div class="w-[18px] h-[18px] border-[1.5px] border-gray-300 rounded-[4px] peer-checked:bg-blue-600 peer-checked:border-blue-600 bg-white transition-colors"></div>
+                                <svg class="absolute text-white w-3 h-3 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                            <span class="text-base text-gray-700">{{ label }}</span>
+                        </label>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 text-gray-400 group-hover:text-gray-900 transition-colors shrink-0"><path d="m6 9 6 6 6-6"></path></svg>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Owner -->
+        <div class="filter-block pt-8">
+            <div class="flex justify-between items-center mb-6 cursor-pointer" onclick="toggleSection('owner')">
+                <h3 class="text-base font-semibold text-gray-900">Owner</h3>
+                <div class="bg-gray-50 rounded-full p-1 hover:bg-gray-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 text-gray-500 collapse-arrow" id="owner-arrow"><path d="m18 15-6-6-6 6"></path></svg>
+                </div>
+            </div>
+            <div class="collapsible-body" id="owner-body" style="max-height:300px;">
+                <div class="space-y-4">
+                    {% for value, label in ownership_types %}
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <div class="relative flex items-center justify-center w-[18px] h-[18px] shrink-0">
+                            <input type="checkbox" name="ownership" value="{{ value }}" {% if request.GET.ownership == value %}checked{% endif %} class="peer sr-only filter-input">
+                            <div class="w-[18px] h-[18px] border-[1.5px] border-gray-300 rounded-[4px] peer-checked:bg-blue-600 peer-checked:border-blue-600 bg-white transition-colors"></div>
+                            <svg class="absolute text-white w-3 h-3 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <span class="text-base text-gray-700">{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        </div>
+        </form>
+        </aside>
+    </div>
+
+    <!-- Cars Section (filter + grid - separate on mobile) -->
+    <div class="flex-1 min-w-0 flex flex-col w-full">
+    <!-- Mobile Filter Section - sticky below navbar on mobile, hidden on desktop -->
+    <section id="mobile-filter-section" class="w-full shrink-0 lg:hidden order-first lg:order-none">
+        <div id="mobile-filter-bar" class="w-full">
+            <div class="mobile-filter-bar scrollbar-hide">
+            <div class="mobile-filter-chip" data-filter="brand">
+                <button type="button" class="chip-btn" data-chip="brand"><span class="chip-label">Brand</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg></button>
+                <div class="chip-dropdown">
+                    {% for brand in brands %}
+                    <button type="button" class="chip-opt" data-value="{{ brand.name }}" data-brand-id="{{ brand.id }}">{{ brand.name }} <span class="chip-x">✕</span></button>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="mobile-filter-chip" data-filter="model">
+                <button type="button" class="chip-btn" data-chip="model"><span class="chip-label">Model</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg></button>
+                <div class="chip-dropdown" id="mobile-model-dropdown"><p class="px-4 py-3 text-sm text-gray-400">Select brand first</p></div>
+            </div>
+            <div class="mobile-filter-chip" data-filter="price">
+                <button type="button" class="chip-btn" data-chip="price"><span class="chip-label">Price</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg></button>
+                <div class="chip-dropdown">
+                    <button type="button" class="chip-opt" data-min="50000" data-max="200000" data-label="Under ₹2 L">Under ₹2 L <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="200000" data-max="500000" data-label="₹2-5 L">₹2-5 L <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="500000" data-max="1000000" data-label="₹5-10 L">₹5-10 L <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="1000000" data-max="2000000" data-label="₹10-20 L">₹10-20 L <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="2000000" data-max="7000000" data-label="₹20 L+">₹20 L+ <span class="chip-x">✕</span></button>
+                </div>
+            </div>
+            <div class="mobile-filter-chip" data-filter="km">
+                <button type="button" class="chip-btn" data-chip="km"><span class="chip-label">Kms</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg></button>
+                <div class="chip-dropdown">
+                    <button type="button" class="chip-opt" data-min="0" data-max="50000" data-label="Under 50k">Under 50k <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="50000" data-max="100000" data-label="50-100k">50-100k <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="100000" data-max="150000" data-label="100-150k">100-150k <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="150000" data-max="200000" data-label="150-200k">150-200k <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="200000" data-max="500000" data-label="200k+">200k+ <span class="chip-x">✕</span></button>
+                </div>
+            </div>
+            <div class="mobile-filter-chip" data-filter="year">
+                <button type="button" class="chip-btn" data-chip="year"><span class="chip-label">Year</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg></button>
+                <div class="chip-dropdown">
+                    <button type="button" class="chip-opt" data-min="2022" data-max="2026" data-label="2022+">2022+ <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="2019" data-max="2022" data-label="2019-2022">2019-2022 <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="2016" data-max="2019" data-label="2016-2019">2016-2019 <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="2013" data-max="2016" data-label="2013-2016">2013-2016 <span class="chip-x">✕</span></button>
+                    <button type="button" class="chip-opt" data-min="2005" data-max="2013" data-label="Before 2013">Before 2013 <span class="chip-x">✕</span></button>
+                </div>
+            </div>
+            <div class="mobile-filter-chip" data-filter="body_type">
+                <button type="button" class="chip-btn" data-chip="body_type"><span class="chip-label">Body</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg></button>
+                <div class="chip-dropdown">
+                    {% for value, label in body_types %}
+                    <button type="button" class="chip-opt" data-value="{{ value }}">{{ label }} <span class="chip-x">✕</span></button>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="mobile-filter-chip" data-filter="fuel">
+                <button type="button" class="chip-btn" data-chip="fuel"><span class="chip-label">Fuel</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg></button>
+                <div class="chip-dropdown">
+                    {% for value, label in fuel_types %}
+                    <button type="button" class="chip-opt" data-value="{{ value }}">{{ label }} <span class="chip-x">✕</span></button>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="mobile-filter-chip" data-filter="transmission">
+                <button type="button" class="chip-btn" data-chip="transmission"><span class="chip-label">Trans</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg></button>
+                <div class="chip-dropdown">
+                    {% for value, label in transmission_types %}
+                    <button type="button" class="chip-opt" data-value="{{ value }}">{{ label }} <span class="chip-x">✕</span></button>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="mobile-filter-chip" data-filter="ownership">
+                <button type="button" class="chip-btn" data-chip="ownership"><span class="chip-label">Owner</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg></button>
+                <div class="chip-dropdown">
+                    {% for value, label in ownership_types %}
+                    <button type="button" class="chip-opt" data-value="{{ value }}">{{ label }} <span class="chip-x">✕</span></button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Spacer: prevents content overlap when filter is fixed (mobile only) -->
+    <div id="mobile-filter-spacer" class="lg:hidden" style="height: 66px;"></div>
+
+    <!-- Page header - below filter on mobile, above cards on desktop -->
+    <section class="py-4 md:py-6 lg:py-4 text-center lg:text-left mb-4 lg:mb-0 order-2 lg:order-none px-1">
+        <h1 class="md:text-5xl text-xl md:text-3xl font-semibold text-zinc-950 tracking-tight mb-1 md:mb-4">Find Your Dream Car</h1>
+        <p class="text-xs md:text-base text-gray-500 max-w-2xl mx-auto lg:mx-0 leading-relaxed">Find your perfect car — verified options for every lifestyle and budget, all in one place.</p>
+    </section>
+
+    <!-- Cards Section (separate from filters) -->
+    <div class="flex-1 min-w-0 w-full overflow-x-hidden relative z-10 order-3 lg:order-none">
+        <div class="flex items-center justify-between mb-4 md:mb-6 sticky top-0 bg-[#f8fafc] py-2 z-10 flex-wrap gap-2 md:gap-3">
+            <p class="text-sm text-gray-500" id="car-count-text">Showing <span class="font-semibold text-gray-900" id="car-count">{{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span> cars</p>
+            <div class="flex items-center gap-3 flex-wrap">
+                <div class="relative" id="sort-dropdown-wrap">
+                    <button type="button" id="sort-toggle" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                        <span id="sort-label">Sort by : Relevance</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sort-chevron"><path d="m6 9 6 6 6-6"></path></svg>
+                    </button>
+                    <div id="sort-menu" class="hidden absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-50">
+                        <button type="button" class="sort-option w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between" data-sort="relevance">Relevance <span class="sort-check hidden text-blue-600">✓</span></button>
+                        <button type="button" class="sort-option w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between" data-sort="discount">Discount - High to Low <span class="sort-check hidden text-blue-600">✓</span></button>
+                        <button type="button" class="sort-option w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between" data-sort="price_low">Price - Low to High <span class="sort-check hidden text-blue-600">✓</span></button>
+                        <button type="button" class="sort-option w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between" data-sort="price_high">Price - High to Low <span class="sort-check hidden text-blue-600">✓</span></button>
+                        <button type="button" class="sort-option w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between" data-sort="km_low">KM Driven - Low to High <span class="sort-check hidden text-blue-600">✓</span></button>
+                        <button type="button" class="sort-option w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between" data-sort="year_new">Year - New to Old <span class="sort-check hidden text-blue-600">✓</span></button>
+                        <button type="button" class="sort-option w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between" data-sort="newest">Newest First <span class="sort-check hidden text-blue-600">✓</span></button>
+                    </div>
+                </div>
+                <a href="#" id="show-filters" class="text-sm text-blue-600 hover:text-blue-700 font-medium {% if not request.GET.q %}hidden{% endif %}">Show filters</a>
+                <button type="button" id="clear-filters" class="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">Clear all filters</button>
+            </div>
+        </div>
+
+        <div id="loading" class="hidden text-center py-12">
+            <div class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-gray-500 text-sm mt-3">Loading cars...</p>
+        </div>
+
+        <section id="car-grid" class="flex flex-col md:flex-row md:flex-wrap gap-4 md:gap-6 min-w-0 w-full">
+            {% include 'cars/_car_grid.html' %}
+        </section>
+
+        <div id="pagination-container">
+            {% include 'cars/_pagination.html' %}
+        </div>
+    </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+
+    /* ── Debounce helper ── */
+    var _dTimer;
+    function debouncedFetch() {
+        clearTimeout(_dTimer);
+        _dTimer = setTimeout(function() { fetchCars(true); }, 300);
+    }
+
+    /* ── Indian number format ── */
+    function fmt(n) {
+        n = parseInt(n);
+        if (n >= 10000000) return '₹ ' + (n/10000000).toFixed(1).replace(/\.0$/,'') + ' Cr';
+        if (n >= 100000) return '₹ ' + (n/100000).toFixed(1).replace(/\.0$/,'') + ' L';
+        return '₹ ' + n.toLocaleString('en-IN');
+    }
+    function fmtKm(n) { return parseInt(n).toLocaleString('en-IN') + ' Km'; }
+
+    /* ── Dual range slider logic ── */
+    function initSlider(id, labelFmt) {
+        var minEl = document.getElementById(id + '-min');
+        var maxEl = document.getElementById(id + '-max');
+        var fill  = document.getElementById(id + '-fill');
+        var minLb = document.getElementById(id + '-min-label');
+        var maxLb = document.getElementById(id + '-max-label');
+        var lo = parseInt(minEl.min), hi = parseInt(minEl.max);
+
+        function update() {
+            var vMin = parseInt(minEl.value), vMax = parseInt(maxEl.value);
+            if (vMin > vMax) { minEl.value = vMax; vMin = vMax; }
+            if (vMax < vMin) { maxEl.value = vMin; vMax = vMin; }
+            var pL = ((vMin - lo) / (hi - lo)) * 100;
+            var pR = ((hi - vMax) / (hi - lo)) * 100;
+            fill.style.left = pL + '%';
+            fill.style.right = pR + '%';
+            minLb.textContent = labelFmt(vMin);
+            maxLb.textContent = labelFmt(vMax);
+        }
+        update();
+        minEl.addEventListener('input', function(){ update(); debouncedFetch(); });
+        maxEl.addEventListener('input', function(){ update(); debouncedFetch(); });
+    }
+
+    initSlider('price', fmt);
+    initSlider('km', fmtKm);
+    initSlider('year', function(v){ return v; });
+
+
+    /* ── Collapsible sections ── */
+    window.toggleSection = function(id) {
+        var body = document.getElementById(id + '-body');
+        var arrow = document.getElementById(id + '-arrow');
+        body.classList.toggle('collapsed');
+        arrow.classList.toggle('rotated');
+    };
+
+    /* ── AJAX fetch ── */
+    var grid    = document.getElementById('car-grid');
+    var countEl = document.getElementById('car-count');
+    var loading = document.getElementById('loading');
+    var form    = document.getElementById('filter-form');
+    var paginationContainer = document.getElementById('pagination-container');
+
+    function fetchCars(resetPage) {
+        if (resetPage) document.getElementById('page-input').value = '1';
+
+        var params;
+        var isMobile = window.matchMedia('(max-width: 1023px)').matches;
+        var mobileBar = document.getElementById('mobile-filter-bar');
+        if (isMobile && mobileBar) {
+            document.getElementById('per-page-input').value = '30';
+            var data = {};
+            data.page = document.getElementById('page-input').value;
+            data.per_page = '30';
+            data.q = document.getElementById('filter-q').value;
+            data.sort = document.getElementById('sort-input').value;
+            var mf = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+            if (mf('mf-brand')) data.brand = mf('mf-brand');
+            if (mf('mf-model')) data.model = mf('mf-model');
+            if (mf('mf-body_type')) data.body_type = mf('mf-body_type');
+            if (mf('mf-fuel')) data.fuel = mf('mf-fuel');
+            if (mf('mf-transmission')) data.transmission = mf('mf-transmission');
+            if (mf('mf-ownership')) data.ownership = mf('mf-ownership');
+            if (mf('mf-min_price')) data.min_price = mf('mf-min_price');
+            if (mf('mf-max_price')) data.max_price = mf('mf-max_price');
+            if (mf('mf-min_year')) data.min_year = mf('mf-min_year');
+            if (mf('mf-max_year')) data.max_year = mf('mf-max_year');
+            if (mf('mf-min_km')) data.min_km = mf('mf-min_km');
+            if (mf('mf-max_km')) data.max_km = mf('mf-max_km');
+            params = new URLSearchParams(data).toString();
+        } else {
+            document.getElementById('per-page-input').value = '9';
+            ['mf-brand','mf-model','mf-body_type','mf-fuel','mf-transmission','mf-ownership','mf-min_price','mf-max_price','mf-min_year','mf-max_year','mf-min_km','mf-max_km'].forEach(function(id){ var el = document.getElementById(id); if (el) el.removeAttribute('name'); });
+            var priceMin = document.getElementById('price-min');
+            var priceMax = document.getElementById('price-max');
+            var kmMin    = document.getElementById('km-min');
+            var kmMax    = document.getElementById('km-max');
+            var yearMin  = document.getElementById('year-min');
+            var yearMax  = document.getElementById('year-max');
+            var data = new FormData(form);
+            ['mf-brand','mf-model','mf-body_type','mf-fuel','mf-transmission','mf-ownership','mf-min_price','mf-max_price','mf-min_year','mf-max_year','mf-min_km','mf-max_km'].forEach(function(id){ var el = document.getElementById(id); if (el) el.setAttribute('name', id.replace('mf-','')); });
+            if (priceMin && priceMax && parseInt(priceMin.value) <= parseInt(priceMin.min) && parseInt(priceMax.value) >= parseInt(priceMax.max)) {
+                data.delete('min_price'); data.delete('max_price');
+            }
+            if (kmMin && kmMax && parseInt(kmMin.value) <= parseInt(kmMin.min) && parseInt(kmMax.value) >= parseInt(kmMax.max)) {
+                data.delete('min_km'); data.delete('max_km');
+            }
+            if (yearMin && yearMax && parseInt(yearMin.value) <= parseInt(yearMin.min) && parseInt(yearMax.value) >= parseInt(yearMax.max)) {
+                data.delete('min_year'); data.delete('max_year');
+            }
+            params = new URLSearchParams(data).toString();
+        }
+        loading.classList.remove('hidden');
+        grid.style.opacity = '0.4';
+        grid.style.transition = 'opacity 0.2s';
+
+        fetch('{% url "car_list" %}?' + params, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            grid.innerHTML = d.html;
+            var total = d.count;
+            var page = d.page || 1;
+            var perPage = d.per_page || 30;
+            var start = total > 0 ? (page - 1) * perPage + 1 : 0;
+            var end = Math.min(page * perPage, total);
+            countEl.textContent = (total > 0) ? (start + '-' + end + ' of ' + total) : '0';
+            if (d.pagination_html) paginationContainer.innerHTML = d.pagination_html;
+            var qVal = document.getElementById('filter-q').value.trim();
+            var sidebar = document.getElementById('filter-sidebar');
+            var showFilters = document.getElementById('show-filters');
+            if (qVal) {
+                if (sidebar) sidebar.classList.add('hidden');
+                if (showFilters) showFilters.classList.remove('hidden');
+            } else {
+                if (sidebar) sidebar.classList.remove('hidden');
+                if (showFilters) showFilters.classList.add('hidden');
+            }
+            loading.classList.add('hidden');
+            grid.style.opacity = '1';
+            history.replaceState(null, '', '{% url "car_list" %}' + (params ? '?' + params : ''));
+        })
+        .catch(function() { loading.classList.add('hidden'); grid.style.opacity = '1'; });
+    }
+
+    /* ── Sort dropdown ── */
+    var sortLabels = { relevance: 'Relevance', discount: 'Discount - High to Low', price_low: 'Price - Low to High', price_high: 'Price - High to Low', km_low: 'KM Driven - Low to High', year_new: 'Year - New to Old', newest: 'Newest First' };
+    var sortToggle = document.getElementById('sort-toggle');
+    var sortMenu = document.getElementById('sort-menu');
+    var sortLabel = document.getElementById('sort-label');
+    var currentSort = document.getElementById('sort-input').value || 'relevance';
+    sortLabel.textContent = 'Sort by : ' + (sortLabels[currentSort] || 'Relevance');
+
+    sortToggle.addEventListener('click', function(e) { e.stopPropagation(); sortMenu.classList.toggle('hidden'); });
+    document.addEventListener('click', function() { sortMenu.classList.add('hidden'); });
+    sortMenu.addEventListener('click', function(e) { e.stopPropagation(); });
+
+    document.querySelectorAll('.sort-option').forEach(function(btn) {
+        if (btn.dataset.sort === currentSort) btn.querySelector('.sort-check').classList.remove('hidden');
+        btn.addEventListener('click', function() {
+            currentSort = this.dataset.sort;
+            document.getElementById('sort-input').value = currentSort;
+            sortLabel.textContent = 'Sort by : ' + sortLabels[currentSort];
+            document.querySelectorAll('.sort-option .sort-check').forEach(function(c) { c.classList.add('hidden'); });
+            this.querySelector('.sort-check').classList.remove('hidden');
+            sortMenu.classList.add('hidden');
+            fetchCars(true);
+        });
+    });
+
+    /* ── Pagination link clicks (event delegation) ── */
+    paginationContainer.addEventListener('click', function(e) {
+        var link = e.target.closest('.pagination-link');
+        if (!link) return;
+        e.preventDefault();
+        var page = link.dataset.page;
+        if (page) {
+            document.getElementById('page-input').value = page;
+            fetchCars(false);
+        }
+    });
+
+    /* ── Toggle checkboxes: single-select per group, click again to deselect ── */
+    var inputs = document.querySelectorAll('.filter-input');
+    for (var i = 0; i < inputs.length; i++) {
+        inputs[i].addEventListener('click', function(e) {
+            var cb = this;
+            var group = cb.name;
+            var wasChecked = cb.dataset.wasChecked === '1';
+
+            if (wasChecked) {
+                cb.checked = false;
+                cb.dataset.wasChecked = '0';
+            } else {
+                var siblings = document.querySelectorAll('.filter-input[name="' + group + '"]');
+                for (var j = 0; j < siblings.length; j++) {
+                    siblings[j].checked = false;
+                    siblings[j].dataset.wasChecked = '0';
+                }
+                cb.checked = true;
+                cb.dataset.wasChecked = '1';
+            }
+            if (group === 'brand') {
+                document.getElementById('model-filter').value = '';
+                document.querySelectorAll('.model-cb').forEach(function(el) { el.checked = false; el.dataset.wasChecked = '0'; });
+                if (!cb.checked) {
+                    document.querySelectorAll('.models-list').forEach(function(el) { el.classList.add('hidden'); });
+                    document.querySelectorAll('.brand-chevron').forEach(function(el) { el.style.transform = ''; });
+                }
+            }
+            fetchCars(true);
+        });
+        if (inputs[i].checked) inputs[i].dataset.wasChecked = '1';
+    }
+
+    /* ── Clear all ── */
+    document.getElementById('clear-filters').addEventListener('click', function() {
+        ['mf-brand','mf-model','mf-body_type','mf-fuel','mf-transmission','mf-ownership','mf-min_price','mf-max_price','mf-min_year','mf-max_year','mf-min_km','mf-max_km'].forEach(function(id){ var el = document.getElementById(id); if (el) el.value = ''; });
+        var all = document.querySelectorAll('.filter-input');
+        for (var x = 0; x < all.length; x++) { all[x].checked = false; all[x].dataset.wasChecked = '0'; }
+        document.getElementById('model-filter').value = '';
+        document.getElementById('sort-input').value = 'relevance';
+        currentSort = 'relevance';
+        sortLabel.textContent = 'Sort by : Relevance';
+        document.querySelectorAll('.sort-option .sort-check').forEach(function(c) { c.classList.add('hidden'); });
+        document.querySelector('.sort-option[data-sort="relevance"] .sort-check').classList.remove('hidden');
+        document.querySelectorAll('.model-cb').forEach(function(el) { el.checked = false; el.dataset.wasChecked = '0'; });
+        document.querySelectorAll('.models-list').forEach(function(el) { el.classList.add('hidden'); });
+        document.querySelectorAll('.brand-chevron').forEach(function(el) { el.style.transform = ''; });
+        document.getElementById('price-min').value = document.getElementById('price-min').min;
+        document.getElementById('price-max').value = document.getElementById('price-max').max;
+        document.getElementById('km-min').value = document.getElementById('km-min').min;
+        document.getElementById('km-max').value = document.getElementById('km-max').max;
+        document.getElementById('year-min').value = document.getElementById('year-min').min;
+        document.getElementById('year-max').value = document.getElementById('year-max').max;
+        initSlider('price', fmt);
+        initSlider('km', fmtKm);
+        initSlider('year', function(v){ return v; });
+        fetchCars(true);
+    });
+
+    /* ── Brand expand → load models ── */
+    var modelCache = {};
+    var expandBtns = document.querySelectorAll('.brand-expand');
+    for (var b = 0; b < expandBtns.length; b++) {
+        expandBtns[b].addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var bid = this.dataset.brandId;
+            var list = document.getElementById('models-' + bid);
+            var chevron = this.querySelector('.brand-chevron');
+
+            if (!list.classList.contains('hidden')) {
+                list.classList.add('hidden');
+                chevron.style.transform = '';
+                return;
+            }
+
+            document.querySelectorAll('.models-list').forEach(function(el) { el.classList.add('hidden'); });
+            document.querySelectorAll('.brand-chevron').forEach(function(el) { el.style.transform = ''; });
+
+            chevron.style.transform = 'rotate(180deg)';
+            list.classList.remove('hidden');
+
+            if (modelCache[bid]) {
+                renderModels(bid, modelCache[bid]);
+                return;
+            }
+
+            list.innerHTML = '<p class="text-xs text-gray-400 py-1">Loading...</p>';
+            fetch('/api/models/?brand_id=' + bid, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    modelCache[bid] = data;
+                    renderModels(bid, data);
+                });
+        });
+    }
+
+    function renderModels(bid, models) {
+        var list = document.getElementById('models-' + bid);
+        var currentModel = document.getElementById('model-filter').value;
+        var html = '';
+        for (var m = 0; m < models.length; m++) {
+            var checked = (models[m].name === currentModel) ? 'checked' : '';
+            var wasData = checked ? 'data-was-checked="1"' : '';
+            html += '<label class="flex items-center gap-3 cursor-pointer py-1">'
+                + '<div class="relative flex items-center justify-center w-[16px] h-[16px] shrink-0">'
+                + '<input type="checkbox" name="model_cb" value="' + models[m].name + '" class="peer sr-only model-cb" ' + checked + ' ' + wasData + '>'
+                + '<div class="w-[16px] h-[16px] border-[1.5px] border-gray-300 rounded-[3px] peer-checked:bg-blue-600 peer-checked:border-blue-600 bg-white transition-colors"></div>'
+                + '<svg class="absolute text-white w-2.5 h-2.5 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+                + '</div>'
+                + '<span class="text-sm text-gray-600">' + models[m].name + '</span>'
+                + '</label>';
+        }
+        if (models.length === 0) html = '<p class="text-xs text-gray-400 py-1">No models found</p>';
+        list.innerHTML = html;
+
+        var mcbs = list.querySelectorAll('.model-cb');
+        for (var n = 0; n < mcbs.length; n++) {
+            mcbs[n].addEventListener('click', function() {
+                var wasChecked = this.dataset.wasChecked === '1';
+                var allMcbs = document.querySelectorAll('.model-cb');
+                for (var q = 0; q < allMcbs.length; q++) { allMcbs[q].checked = false; allMcbs[q].dataset.wasChecked = '0'; }
+
+                if (wasChecked) {
+                    this.checked = false;
+                    this.dataset.wasChecked = '0';
+                    document.getElementById('model-filter').value = '';
+                } else {
+                    this.checked = true;
+                    this.dataset.wasChecked = '1';
+                    document.getElementById('model-filter').value = this.value;
+                }
+                fetchCars(true);
+            });
+        }
+    }
+
+    /* ── Header search: only on magnifying glass button click (no page reload) ── */
+    var headerSearch = document.getElementById('header-search');
+    var headerForm = document.getElementById('header-search-form');
+    if (headerForm && headerSearch && document.getElementById('car-grid')) {
+        document.getElementById('filter-q').value = headerSearch.value.trim();
+        headerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('filter-q').value = headerSearch.value.trim();
+            fetchCars(true);
+        });
+    }
+    /* ── Filter section search: same as header - click magnifying glass to search cars ── */
+    var filterSearchBtn = document.getElementById('filter-search-btn');
+    var brandSearchInput = document.getElementById('brand-search');
+    if (filterSearchBtn && brandSearchInput) {
+        filterSearchBtn.addEventListener('click', function() {
+            var q = brandSearchInput.value.trim();
+            document.getElementById('filter-q').value = q;
+            if (headerSearch) headerSearch.value = q;
+            fetchCars(true);
+        });
+        brandSearchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); filterSearchBtn.click(); }
+        });
+    }
+    document.getElementById('show-filters').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('filter-q').value = '';
+        if (headerSearch) headerSearch.value = '';
+        document.getElementById('filter-sidebar').classList.remove('hidden');
+        this.classList.add('hidden');
+        fetchCars(true);
+    });
+
+    /* ── Brand search (local) ── */
+    var brandSearchEl = document.getElementById('brand-search');
+    if (brandSearchEl) {
+        brandSearchEl.addEventListener('input', function() {
+            var q = this.value.toLowerCase();
+            var items = document.querySelectorAll('.brand-item');
+            for (var k = 0; k < items.length; k++) {
+                var name = items[k].textContent.toLowerCase();
+                items[k].style.display = name.indexOf(q) > -1 ? '' : 'none';
+            }
+        });
+    }
+
+    /* ── Mobile filter bar (Spinny-style) ── */
+    var mobileBar = document.getElementById('mobile-filter-bar');
+    if (mobileBar) {
+        var chips = mobileBar.querySelectorAll('.mobile-filter-chip');
+        var openChip = null;
+
+        function closeAllDropdowns() {
+            chips.forEach(function(c) {
+                var dd = c.querySelector('.chip-dropdown');
+                dd.classList.remove('open');
+                dd.style.top = ''; dd.style.left = '';
+                c.querySelector('.chip-btn').classList.remove('active');
+            });
+            openChip = null;
+        }
+
+        function syncFormFromMobile() {
+            var form = document.getElementById('filter-form');
+            if (!form) return;
+            fetchCars(true);
+        }
+
+        function updateChipLabel(chip, label, active) {
+            var btn = chip.querySelector('.chip-btn');
+            var lbl = btn.querySelector('.chip-label');
+            if (!lbl) return;
+            var defaultLabel = chip.dataset.filter;
+            defaultLabel = defaultLabel.charAt(0).toUpperCase() + defaultLabel.slice(1).replace('_',' ');
+            lbl.textContent = active ? (defaultLabel + ': ' + label) : defaultLabel;
+            btn.classList.toggle('active', !!active);
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!mobileBar.contains(e.target)) closeAllDropdowns();
+        });
+
+        function setMf(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; }
+        chips.forEach(function(chip) {
+            var btn = chip.querySelector('.chip-btn');
+            var dd = chip.querySelector('.chip-dropdown');
+            var filter = chip.dataset.filter;
+
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var isOpen = dd.classList.contains('open');
+                closeAllDropdowns();
+                if (!isOpen) {
+                    dd.classList.add('open');
+                    openChip = chip;
+                    var rect = btn.getBoundingClientRect();
+                    dd.style.top = (rect.bottom + 4) + 'px';
+                    var left = Math.max(8, Math.min(rect.left, window.innerWidth - 220));
+                    dd.style.left = left + 'px';
+                    dd.style.right = 'auto';
+                    if (filter === 'model') {
+                        var brandChip = mobileBar.querySelector('.mobile-filter-chip[data-filter="brand"]');
+                        var brandId = (brandChip && brandChip.dataset.brandId) || (function(){
+                            var cb = document.querySelector('.filter-input[name="brand"]:checked');
+                            var item = cb ? cb.closest('.brand-item') : null;
+                            return item ? item.dataset.brandId : null;
+                        })();
+                        if (brandId) {
+                            dd.innerHTML = '<p class="px-4 py-3 text-sm text-gray-400">Loading...</p>';
+                            fetch('{% url "api_get_models" %}?brand_id=' + brandId)
+                                .then(function(r){ return r.json(); })
+                                .then(function(models){
+                                    dd.innerHTML = '';
+                                    if (models && models.length) {
+                                        models.forEach(function(m){
+                                            var opt = document.createElement('button');
+                                            opt.type = 'button';
+                                            opt.className = 'chip-opt';
+                                            opt.dataset.value = m.name;
+                                            opt.innerHTML = m.name + ' <span class="chip-x">✕</span>';
+                                            opt.addEventListener('click', function(ev){ ev.stopPropagation(); selectOpt(opt, m.name); dd.classList.remove('open'); });
+                                            var xEl = opt.querySelector('.chip-x');
+                                            if (xEl) xEl.addEventListener('click', function(ev){ ev.stopPropagation(); ev.preventDefault(); deselectModel(); dd.classList.remove('open'); });
+                                            dd.appendChild(opt);
+                                        });
+                                    } else {
+                                        dd.innerHTML = '<p class="px-4 py-3 text-sm text-gray-400">No models found</p>';
+                                    }
+                                })
+                                .catch(function(){ dd.innerHTML = '<p class="px-4 py-3 text-sm text-red-500">Failed to load</p>'; });
+                        } else {
+                            dd.innerHTML = '<p class="px-4 py-3 text-sm text-gray-400">Select brand first</p>';
+                        }
+                    }
+                }
+            });
+
+            function setMf(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; }
+            function selectOpt(opt, val) {
+                if (filter === 'brand') {
+                    chip.dataset.selected = val;
+                    chip.dataset.brandId = opt.dataset.brandId || '';
+                    setMf('mf-brand', val);
+                    setMf('mf-model', '');
+                    updateChipLabel(chip, val, true);
+                } else if (filter === 'model') {
+                    chip.dataset.selected = val;
+                    setMf('mf-model', val);
+                    updateChipLabel(chip, val, true);
+                } else if (filter === 'price' && opt.dataset.min && opt.dataset.max) {
+                    setMf('mf-min_price', opt.dataset.min);
+                    setMf('mf-max_price', opt.dataset.max);
+                    chip.dataset.selected = opt.dataset.label || opt.textContent.trim().replace(/\s*✕\s*$/,'');
+                    updateChipLabel(chip, chip.dataset.selected, true);
+                } else if (filter === 'km' && opt.dataset.min && opt.dataset.max) {
+                    setMf('mf-min_km', opt.dataset.min);
+                    setMf('mf-max_km', opt.dataset.max);
+                    chip.dataset.selected = opt.dataset.label || opt.textContent.trim().replace(/\s*✕\s*$/,'');
+                    updateChipLabel(chip, chip.dataset.selected, true);
+                } else if (filter === 'year' && opt.dataset.min && opt.dataset.max) {
+                    setMf('mf-min_year', opt.dataset.min);
+                    setMf('mf-max_year', opt.dataset.max);
+                    chip.dataset.selected = opt.dataset.label || opt.textContent.trim().replace(/\s*✕\s*$/,'');
+                    updateChipLabel(chip, chip.dataset.selected, true);
+                } else if (['body_type','fuel','transmission','ownership'].indexOf(filter) !== -1 && opt.dataset.value) {
+                    setMf('mf-' + filter, opt.dataset.value);
+                    chip.dataset.selected = opt.dataset.value;
+                    updateChipLabel(chip, opt.dataset.value, true);
+                }
+                syncFormFromMobile();
+            }
+
+            function deselectModel() {
+                setMf('mf-model', '');
+                chip.dataset.selected = '';
+                updateChipLabel(chip, '', false);
+                syncFormFromMobile();
+            }
+
+            dd.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var opt = e.target.closest('.chip-opt');
+                if (!opt) return;
+                if (e.target.classList.contains('chip-x') || e.target.closest('.chip-x')) {
+                    if (filter === 'brand') {
+                        setMf('mf-brand', '');
+                        setMf('mf-model', '');
+                        chip.dataset.selected = '';
+                        chip.dataset.brandId = '';
+                        updateChipLabel(chip, '', false);
+                    } else if (filter === 'model') deselectModel();
+                    else if (filter === 'price') {
+                        setMf('mf-min_price', '');
+                        setMf('mf-max_price', '');
+                        chip.dataset.selected = '';
+                        updateChipLabel(chip, '', false);
+                    } else if (filter === 'km') {
+                        setMf('mf-min_km', '');
+                        setMf('mf-max_km', '');
+                        chip.dataset.selected = '';
+                        updateChipLabel(chip, '', false);
+                    } else if (filter === 'year') {
+                        setMf('mf-min_year', '');
+                        setMf('mf-max_year', '');
+                        chip.dataset.selected = '';
+                        updateChipLabel(chip, '', false);
+                    } else if (['body_type','fuel','transmission','ownership'].indexOf(filter) !== -1) {
+                        setMf('mf-' + filter, '');
+                        chip.dataset.selected = '';
+                        updateChipLabel(chip, '', false);
+                    }
+                    dd.classList.remove('open');
+                    syncFormFromMobile();
+                } else {
+                    var val = opt.dataset.value || opt.dataset.label;
+                    if (val || (opt.dataset.min && opt.dataset.max)) selectOpt(opt, val || opt.dataset.label || '');
+                    dd.classList.remove('open');
+                }
+            });
+        });
+
+        function syncChipLabelsFromMf() {
+            var mf = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+            chips.forEach(function(c) {
+                var f = c.dataset.filter;
+                var val = '';
+                if (f === 'brand') {
+                    val = mf('mf-brand');
+                    if (val) {
+                        c.querySelectorAll('.chip-opt').forEach(function(o){ if (o.dataset.value === val && o.dataset.brandId) c.dataset.brandId = o.dataset.brandId; });
+                    }
+                } else if (f === 'model') val = mf('mf-model');
+                else if (['body_type','fuel','transmission','ownership'].indexOf(f) !== -1) val = mf('mf-' + f);
+                else if (f === 'price' && mf('mf-min_price') && mf('mf-max_price')) val = 'Set';
+                else if (f === 'km' && mf('mf-min_km') && mf('mf-max_km')) val = 'Set';
+                else if (f === 'year' && mf('mf-min_year') && mf('mf-max_year')) val = 'Set';
+                if (val) { c.dataset.selected = val; updateChipLabel(c, val, true); }
+            });
+        }
+        syncChipLabelsFromMf();
+
+        document.getElementById('clear-filters').addEventListener('click', function() {
+            ['mf-brand','mf-model','mf-body_type','mf-fuel','mf-transmission','mf-ownership','mf-min_price','mf-max_price','mf-min_year','mf-max_year','mf-min_km','mf-max_km'].forEach(function(id){ setMf(id, ''); });
+            chips.forEach(function(c) {
+                c.dataset.selected = '';
+                c.dataset.brandId = '';
+                var lbl = c.querySelector('.chip-label');
+                if (lbl) {
+                    var def = c.dataset.filter;
+                    def = def.charAt(0).toUpperCase() + def.slice(1).replace('_',' ');
+                    lbl.textContent = def;
+                }
+                c.querySelector('.chip-btn').classList.remove('active');
+            });
+            closeAllDropdowns();
+        });
+    }
+
+    if (window.matchMedia('(max-width: 1023px)').matches) {
+        document.getElementById('per-page-input').value = '30';
+        fetchCars(true);
+    }
+
+    /* Mobile: set filter fixed top = header height, spacer height = filter height (no gap, no overlap) */
+    function setMobileFilterLayout() {
+        if (window.matchMedia('(max-width: 1023px)').matches) {
+            var header = document.getElementById('main-header');
+            var filter = document.getElementById('mobile-filter-section');
+            var spacer = document.getElementById('mobile-filter-spacer');
+            if (header && filter) {
+                filter.style.top = header.offsetHeight + 'px';
+                if (spacer) spacer.style.height = filter.offsetHeight + 'px';
+            }
+        }
+    }
+    setMobileFilterLayout();
+    window.addEventListener('resize', setMobileFilterLayout);
+
+})();
+</script>
+{% endblock %}

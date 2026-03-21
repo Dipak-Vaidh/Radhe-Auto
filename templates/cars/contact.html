@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contact Us - Radhe Cars{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="hero-bg overflow-hidden pt-16 pb-16 sm:pt-24 sm:pb-24 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 text-center">
+        <h1 class="text-2xl sm:text-3xl md:text-5xl font-semibold text-white tracking-tight mb-3 sm:mb-4">Get in Touch</h1>
+        <p class="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto px-1">Whether you're looking to buy, sell, or just have a question about our inventory, our experts are here to help you every step of the way.</p>
+    </div>
+</section>
+
+<!-- Main Contact Section -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-20 -mt-8 sm:-mt-12 lg:-mt-16 relative z-20 mb-8 sm:mb-12">
+    <div class="bg-white rounded-2xl sm:rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 overflow-hidden flex flex-col lg:flex-row">
+
+        <!-- Left Info Section -->
+        <div class="lg:w-2/5 lg:p-14 lg:border-b-0 lg:border-r flex flex-col bg-slate-50 border-gray-100 border-b p-6 sm:p-8 lg:p-14 justify-between">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight mb-2 sm:mb-3">Contact Information</h2>
+                <p class="text-sm text-gray-500 mb-6 sm:mb-8 lg:mb-12 leading-relaxed">Fill out the form and our team will get back to you within 24 hours.</p>
+
+                <div class="space-y-5 sm:space-y-6 lg:space-y-8">
+                    <div class="flex items-start gap-3 sm:gap-4">
+                        <div class="bg-blue-100 text-blue-600 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0">
+                            <iconify-icon icon="solar:phone-linear" class="text-lg sm:text-xl"></iconify-icon>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-medium text-gray-900 mb-0.5">Call Us</h3>
+                            <a href="tel:9624938377" class="text-sm text-gray-600 hover:text-blue-600 transition-colors">962 493 8377</a>
+                            <p class="text-xs sm:text-sm text-gray-400 mt-0.5">Mon-Sat from 9am to 6pm</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 sm:gap-4">
+                        <div class="bg-blue-100 text-blue-600 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0">
+                            <iconify-icon icon="solar:letter-linear" class="text-lg sm:text-xl"></iconify-icon>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-medium text-gray-900 mb-0.5">Email Us</h3>
+                            <a href="mailto:info@radhecars.com" class="text-sm text-gray-600 hover:text-blue-600 transition-colors break-all">info@radhecars.com</a>
+                            <p class="text-xs sm:text-sm text-gray-400 mt-0.5">We'll respond as soon as possible</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 sm:gap-4">
+                        <div class="bg-blue-100 text-blue-600 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0">
+                            <iconify-icon icon="solar:map-point-linear" class="text-lg sm:text-xl"></iconify-icon>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-medium text-gray-900 mb-0.5">Visit Us</h3>
+                            <p class="leading-relaxed text-xs sm:text-sm text-gray-600">Gota Chokdi Flyover, Near Satyamev Vista, Gota, Ahmedabad – 382481, Gujarat</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Form Section -->
+        <div class="lg:w-3/5 p-6 sm:p-8 lg:p-14">
+            <div id="contact-success" class="hidden bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                <p class="text-green-700 text-sm font-medium" id="contact-success-msg"></p>
+            </div>
+            <div id="contact-error" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+                <p class="text-red-700 text-sm font-medium" id="contact-error-msg"></p>
+            </div>
+            <form id="contact-form" class="space-y-5 sm:space-y-6">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-900 mb-1.5">First Name</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}<p class="text-red-500 text-xs mt-1">{{ form.first_name.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-900 mb-1.5">Last Name</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}<p class="text-red-500 text-xs mt-1">{{ form.last_name.errors.0 }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-900 mb-1.5">Email Address</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<p class="text-red-500 text-xs mt-1">{{ form.email.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-900 mb-1.5">Phone Number</label>
+                        <div class="flex gap-2 min-w-0">
+                            <select id="contact-country-code" class="w-[72px] sm:w-20 shrink-0 bg-white border border-gray-200 rounded-xl py-3 px-2 sm:px-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer">
+                                <option value="91" selected>+91</option>
+                            </select>
+                            <input type="tel" id="contact-phone-digits" maxlength="10" placeholder="98765 43210" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-xl py-3 px-4 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm" inputmode="numeric" pattern="[0-9]*" autocomplete="tel-national">
+                        </div>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}<p class="text-red-500 text-xs mt-1">{{ form.phone.errors.0 }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-900 mb-1.5">Subject</label>
+                    {{ form.subject }}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-900 mb-1.5">Message</label>
+                    {{ form.message }}
+                    {% if form.message.errors %}<p class="text-red-500 text-xs mt-1">{{ form.message.errors.0 }}</p>{% endif %}
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-4 rounded-xl text-sm font-medium transition-colors mt-2 shadow-sm touch-manipulation">
+                    Send Message
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+    var phoneInput = document.getElementById('contact-phone-digits');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+        });
+    }
+})();
+
+document.getElementById('contact-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var form = this;
+    var btn = form.querySelector('button[type="submit"]');
+    var origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    document.getElementById('contact-success').classList.add('hidden');
+    document.getElementById('contact-error').classList.add('hidden');
+
+    var countryCode = document.getElementById('contact-country-code').value || '91';
+    var phoneDigits = document.getElementById('contact-phone-digits').value.replace(/[^0-9]/g, '').slice(0, 10);
+    document.getElementById('contact-phone').value = '+' + countryCode + phoneDigits;
+
+    if (phoneDigits.length !== 10) {
+        btn.disabled = false;
+        btn.textContent = origText;
+        document.getElementById('contact-error-msg').textContent = 'Please enter a valid 10-digit phone number.';
+        document.getElementById('contact-error').classList.remove('hidden');
+        return;
+    }
+
+    fetch('{% url "contact" %}', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: new FormData(form)
+    })
+    .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+    .then(function(res) {
+        btn.disabled = false;
+        btn.textContent = origText;
+        if (res.ok) {
+            document.getElementById('contact-success-msg').textContent = res.data.message;
+            document.getElementById('contact-success').classList.remove('hidden');
+            form.reset();
+            var pd = document.getElementById('contact-phone-digits');
+            if (pd) pd.value = '';
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        } else {
+            var msg = res.data.message || 'Please fix the errors and try again.';
+            if (res.data.errors) {
+                var errList = [];
+                for (var k in res.data.errors) { errList.push(k + ': ' + res.data.errors[k].join(', ')); }
+                msg = errList.join(' | ');
+            }
+            document.getElementById('contact-error-msg').textContent = msg;
+            document.getElementById('contact-error').classList.remove('hidden');
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.textContent = origText;
+        document.getElementById('contact-error-msg').textContent = 'Something went wrong. Please try again.';
+        document.getElementById('contact-error').classList.remove('hidden');
+    });
+});
+</script>
+{% endblock %}
