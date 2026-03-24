@@ -80,8 +80,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'radhe_cars.wsgi.application'
 
 # Use DATABASE_URL from Render/Supabase when set; otherwise use local PostgreSQL
+# ssl_require: Supabase requires TLS (set DATABASE_SSL_REQUIRE=false only for local non-SSL Postgres)
 if os.environ.get('DATABASE_URL'):
-    DATABASES = {'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))}
+    _ssl = os.environ.get('DATABASE_SSL_REQUIRE', 'true').lower() in ('true', '1', 'yes')
+    DATABASES = {
+        'default': dj_database_url.parse(
+            os.environ.get('DATABASE_URL'),
+            conn_max_age=int(os.environ.get('DB_CONN_MAX_AGE', '600')),
+            ssl_require=_ssl,
+        )
+    }
 else:
     DATABASES = {
         'default': {
