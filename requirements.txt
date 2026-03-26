@@ -1,3 +1,5 @@
+# Minimal deps for Radhe Cars (Django + Supabase + allauth + EB).
+# Old full pip freeze saved as requirements-frozen-backup.txt if needed.
 Django>=5.0,<6.0
 Pillow>=10.0
 django-allauth>=0.57.0
