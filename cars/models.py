@@ -1,6 +1,76 @@
+import io
+import uuid
+
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.db import models
 from django.contrib.auth.models import User
+from PIL import Image, ImageOps
+
+WEBP_QUALITY = 75
+
+
+def _safe_delete_stored_file(name):
+    if not name:
+        return
+    try:
+        default_storage.delete(name)
+    except Exception:
+        pass
+
+
+def _resize_to_webp_bytes(file_like, max_width):
+    """
+    Resize (max width, aspect preserved) and encode as WebP at WEBP_QUALITY.
+    Returns raw bytes.
+    """
+    img = Image.open(file_like)
+    try:
+        img = ImageOps.exif_transpose(img)
+    except Exception:
+        pass
+
+    if img.mode not in ('RGB', 'RGBA'):
+        if img.mode == 'P' and 'transparency' in img.info:
+            img = img.convert('RGBA')
+        else:
+            img = img.convert('RGB')
+
+    w, h = img.size
+    if w > max_width:
+        new_h = max(1, int(round(h * (max_width / float(w)))))
+        img = img.resize((max_width, new_h), Image.Resampling.LANCZOS)
+
+    buf = io.BytesIO()
+    save_kw = {'format': 'WEBP', 'quality': WEBP_QUALITY, 'method': 6}
+    if img.mode == 'RGBA':
+        img.save(buf, **save_kw)
+    else:
+        rgb = img.convert('RGB')
+        rgb.save(buf, **save_kw)
+    return buf.getvalue()
+
+
+def _assign_webp(field, folder, max_width, previous_name):
+    """
+    Replace ImageField contents with processed WebP. Returns new stored name
+    (relative path) or None if processing was skipped/failed.
+    """
+    if not field:
+        return None
+    try:
+        field.open('rb')
+        try:
+            raw = field.read()
+        finally:
+            field.close()
+        data = _resize_to_webp_bytes(io.BytesIO(raw), max_width)
+        new_name = f'{folder}/{uuid.uuid4().hex}.webp'
+        field.save(new_name, ContentFile(data), save=False)
+        return field.name
+    except Exception:
+        return previous_name
 
 
 class Brand(models.Model):
@@ -12,6 +82,31 @@ class Brand(models.Model):
 
     class Meta:
         ordering = ['name']
+
+    def save(self, *args, **kwargs):
+        old_logo_name = None
+        if self.pk:
+            try:
+                prev = Brand.objects.only('logo').get(pk=self.pk)
+                if prev.logo:
+                    old_logo_name = prev.logo.name
+            except Brand.DoesNotExist:
+                pass
+
+        if self.logo:
+            if not self.pk or not old_logo_name or getattr(self.logo, 'name', None) != old_logo_name:
+                try:
+                    _assign_webp(self.logo, 'brands', 300, old_logo_name)
+                except Exception:
+                    pass
+
+        super().save(*args, **kwargs)
+
+        has_logo = bool(self.logo and getattr(self.logo, 'name', None))
+        if old_logo_name and has_logo and self.logo.name != old_logo_name:
+            _safe_delete_stored_file(old_logo_name)
+        elif old_logo_name and not has_logo:
+            _safe_delete_stored_file(old_logo_name)
 
 
 class CarModel(models.Model):
@@ -180,6 +275,31 @@ class CarImage(models.Model):
     def __str__(self):
         return f"Image for {self.car.title}"
 
+    def save(self, *args, **kwargs):
+        old_image_name = None
+        if self.pk:
+            try:
+                prev = CarImage.objects.only('image').get(pk=self.pk)
+                if prev.image:
+                    old_image_name = prev.image.name
+            except CarImage.DoesNotExist:
+                pass
+
+        if self.image:
+            if not self.pk or not old_image_name or getattr(self.image, 'name', None) != old_image_name:
+                try:
+                    _assign_webp(self.image, 'cars', 1200, old_image_name)
+                except Exception:
+                    pass
+
+        super().save(*args, **kwargs)
+
+        has_img = bool(self.image and getattr(self.image, 'name', None))
+        if old_image_name and has_img and self.image.name != old_image_name:
+            _safe_delete_stored_file(old_image_name)
+        elif old_image_name and not has_img:
+            _safe_delete_stored_file(old_image_name)
+
 
 class Inquiry(models.Model):
     SUBJECT_CHOICES = [
@@ -219,6 +339,31 @@ class Testimonial(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        old_image_name = None
+        if self.pk:
+            try:
+                prev = Testimonial.objects.only('image').get(pk=self.pk)
+                if prev.image:
+                    old_image_name = prev.image.name
+            except Testimonial.DoesNotExist:
+                pass
+
+        if self.image:
+            if not self.pk or not old_image_name or getattr(self.image, 'name', None) != old_image_name:
+                try:
+                    _assign_webp(self.image, 'testimonials', 500, old_image_name)
+                except Exception:
+                    pass
+
+        super().save(*args, **kwargs)
+
+        has_img = bool(self.image and getattr(self.image, 'name', None))
+        if old_image_name and has_img and self.image.name != old_image_name:
+            _safe_delete_stored_file(old_image_name)
+        elif old_image_name and not has_img:
+            _safe_delete_stored_file(old_image_name)
 
 
 class Wishlist(models.Model):
