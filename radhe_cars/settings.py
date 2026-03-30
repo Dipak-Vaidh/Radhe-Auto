@@ -8,14 +8,13 @@ from django.core.exceptions import ImproperlyConfigured
 
 def _prefer_ipv4_for_supabase(db):
     """
-    Supabase DNS can return IPv6 first; Render build/runtime often has no IPv6 route
-    ('Network is unreachable'). Prefer IPv4 via libpq hostaddr when possible.
-    Skip pooler hosts — they are IPv4-proxied; hostaddr can break routing/TLS with PgBouncer.
+    Supabase DNS can return IPv6 first; some hosts have no IPv6 route.
+    Prefer IPv4 via libpq hostaddr when possible.
+    Skip pooler hosts — IPv4-proxied; hostaddr can break PgBouncer.
     """
     host = db.get('HOST')
     if not host or 'pooler.' in host:
         return
-    # Direct: *.supabase.co — Pooler: *.pooler.supabase.com (handled above)
     if 'supabase.co' not in host and 'supabase.com' not in host:
         return
     port = int(db.get('PORT') or 5432)
@@ -26,26 +25,69 @@ def _prefer_ipv4_for_supabase(db):
     except OSError:
         pass
 
+
+# -----------------------------------------------------------------------------
+# Paths & env
+# -----------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
-# Load project root .env into os.environ (file is optional; gitignored)
 load_dotenv(BASE_DIR / '.env')
 
-DEBUG = os.environ.get('DEBUG') == 'True'
+# Development: set DEBUG=True in .env. Production (Lightsail): DEBUG=False or omit.
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
+# -----------------------------------------------------------------------------
+# Required secrets (never commit real values)
+# -----------------------------------------------------------------------------
 SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
     raise ImproperlyConfigured('Set the SECRET_KEY environment variable.')
-
-# Temporary: replace with your domain list before final production cutover
-ALLOWED_HOSTS = ['*']
 
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
 if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
     raise ImproperlyConfigured(
-        'Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.'
+        'Set the GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.'
     )
 
+# -----------------------------------------------------------------------------
+# Hosts / CSRF (production defaults for radheauto.com; override via env for staging)
+# -----------------------------------------------------------------------------
+# ALLOWED_HOSTS: comma-separated, e.g. radheauto.com,www.radheauto.com,127.0.0.1
+_default_hosts = 'radheauto.com,www.radheauto.com'
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get('ALLOWED_HOSTS', _default_hosts).split(',')
+    if h.strip()
+]
+
+# Production HTTPS origins (required for CSRF on POST when DEBUG=False).
+_production_csrf_origins = [
+    'https://www.radheauto.com',
+    'https://radheauto.com',
+]
+_csrf_from_env = [
+    o.strip()
+    for o in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if o.strip()
+]
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(_production_csrf_origins + _csrf_from_env))
+if DEBUG:
+    # Local dev over HTTP
+    CSRF_TRUSTED_ORIGINS.extend(
+        [
+            'http://127.0.0.1:8000',
+            'http://localhost:8000',
+            'http://127.0.0.1:8080',
+            'http://localhost:8080',
+        ]
+    )
+    for _h in ALLOWED_HOSTS:
+        CSRF_TRUSTED_ORIGINS.extend([f'http://{_h}:8000', f'http://{_h}:8080'])
+    CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(CSRF_TRUSTED_ORIGINS))
+
+# -----------------------------------------------------------------------------
+# Django apps
+# -----------------------------------------------------------------------------
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -61,6 +103,7 @@ INSTALLED_APPS = [
     'cars',
 ]
 
+# django.contrib.sites: set domain to www.radheauto.com (or canonical host) in Admin → Sites.
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
@@ -70,7 +113,6 @@ AUTHENTICATION_BACKENDS = [
 
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
-ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_PREVENT_ENUMERATION = False
 SOCIALACCOUNT_AUTO_SIGNUP = True
@@ -86,11 +128,13 @@ SOCIALACCOUNT_PROVIDERS = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'radhe_cars.middleware.NormalizeAdminPanelPathMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'cars.admin_panel.middleware.StaffAdminPanelMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -119,12 +163,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'radhe_cars.wsgi.application'
 
-# Use DATABASE_URL from Render/Supabase when set; otherwise use local PostgreSQL
-# ssl_require: Supabase requires TLS (set DATABASE_SSL_REQUIRE=false only for local non-SSL Postgres)
+# -----------------------------------------------------------------------------
+# Database: PostgreSQL only — either DATABASE_URL (Supabase/production) or DB_* (local Postgres)
+# -----------------------------------------------------------------------------
 if os.environ.get('DATABASE_URL'):
     _ssl = os.environ.get('DATABASE_SSL_REQUIRE', 'true').lower() in ('true', '1', 'yes')
-    _url = os.environ.get('DATABASE_URL')
-    # Session/transaction pooler (PgBouncer): no persistent conn + no server-side cursors
+    _url = os.environ['DATABASE_URL']
     _pooler = 'pooler.' in _url
     _max_age = 0 if _pooler else int(os.environ.get('DB_CONN_MAX_AGE', '600'))
     _db = dj_database_url.parse(
@@ -136,17 +180,27 @@ if os.environ.get('DATABASE_URL'):
     if os.environ.get('DATABASE_IPV4_PREFER', 'true').lower() in ('true', '1', 'yes'):
         _prefer_ipv4_for_supabase(_db)
     DATABASES = {'default': _db}
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'radhe_auto',
-            'USER': 'postgres',
-            'PASSWORD': '1234',
-            'HOST': 'localhost',
-            'PORT': '5432',
-        }
+elif os.environ.get('DB_HOST') and os.environ.get('DB_NAME'):
+    # Local/dev Postgres without DATABASE_URL (no SQLite)
+    _local = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ['DB_NAME'],
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ['DB_HOST'],
+        'PORT': os.environ.get('DB_PORT', '5432'),
+        'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '0')),
     }
+    if os.environ.get('DB_SSL', '').lower() in ('true', '1', 'yes'):
+        _local.setdefault('OPTIONS', {})['sslmode'] = 'require'
+    DATABASES = {'default': _local}
+else:
+    raise ImproperlyConfigured(
+        'Set PostgreSQL via .env: either DATABASE_URL=postgresql://... '
+        'or DB_HOST, DB_NAME, DB_USER, DB_PASSWORD (and optional DB_PORT). '
+        'SQLite is not used.'
+    )
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -160,12 +214,26 @@ TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
+# -----------------------------------------------------------------------------
+# Static (WhiteNoise) & media (Nginx in production — Django does not serve /media/ when DEBUG=False)
+# -----------------------------------------------------------------------------
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] if os.path.isdir(os.path.join(BASE_DIR, 'static')) else []
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Production: compressed static files via WhiteNoise. Dev: default finder storage.
+if not DEBUG:
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+        },
+    }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -176,47 +244,78 @@ ACCOUNT_LOGIN_URL = '/login/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 ACCOUNT_ADAPTER = 'cars.account_adapter.CustomAccountAdapter'
 
-# Security defaults (enable SECURE_SSL_REDIRECT and cookie flags when HTTPS is configured)
+# -----------------------------------------------------------------------------
+# Security: HTTPS (Nginx terminates TLS; Gunicorn sees HTTP + X-Forwarded-Proto)
+# -----------------------------------------------------------------------------
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
 
-if os.environ.get('USE_X_FORWARDED_HEADERS', '').lower() in ('true', '1', 'yes'):
+# Trust proxy when USE_X_FORWARDED_HEADERS=true (default in production) or explicitly set.
+_use_proxy = os.environ.get('USE_X_FORWARDED_HEADERS', 'false' if DEBUG else 'true').lower() in (
+    'true',
+    '1',
+    'yes',
+)
+if _use_proxy:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     USE_X_FORWARDED_HOST = True
 
-_csrf_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '').strip()
-_csrf_list = [o.strip() for o in _csrf_origins.split(',') if o.strip()] if _csrf_origins else []
-# LAN / phone testing: Django 4+ CSRF checks need the full origin (e.g. http://192.168.x.x:8000)
-if DEBUG:
-    _csrf_list.extend(
-        [
-            'http://127.0.0.1:8000',
-            'http://localhost:8000',
-            'http://127.0.0.1:8080',
-            'http://localhost:8080',
-        ]
-    )
-    for _h in ALLOWED_HOSTS:
-        if _h and _h != '*':
-            _csrf_list.extend([f'http://{_h}:8000', f'http://{_h}:8080'])
-    _csrf_list = list(dict.fromkeys(_csrf_list))
-if _csrf_list:
-    CSRF_TRUSTED_ORIGINS = _csrf_list
-
 if not DEBUG:
-    LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'handlers': {'console': {'class': 'logging.StreamHandler'}},
-        'loggers': {
-            'django.request': {
-                'handlers': ['console'],
-                'level': 'ERROR',
-                'propagate': False,
-            },
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'true').lower() in (
+        'true',
+        '1',
+        'yes',
+    )
+    # Optional HSTS (start small, increase later)
+    SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = False
+else:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_SSL_REDIRECT = False
+    SECURE_HSTS_SECONDS = 0
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {name} {message}',
+            'style': '{',
         },
-    }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'cars.admin_panel.auth': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+    },
+}

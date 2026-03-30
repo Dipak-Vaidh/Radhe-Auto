@@ -1,0 +1,12 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Delete brand{% endblock %}
+{% block heading %}Delete brand{% endblock %}
+{% block content %}
+<div class="bg-white rounded-xl border p-6 max-w-lg">
+    <p class="mb-4">Delete <strong>{{ object.name }}</strong>?</p>
+    <form method="post" class="flex flex-wrap gap-2 items-center">{% csrf_token %}
+        <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg border border-red-700 shadow-sm hover:bg-red-700">Delete</button>
+        <a href="{% url 'admin_panel:brand_list' %}" class="ap-btn ap-btn-neutral">Cancel</a>
+    </form>
+</div>
+{% endblock %}

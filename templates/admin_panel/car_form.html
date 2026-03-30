@@ -1,0 +1,55 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} car{% endblock %}
+{% block heading %}{% if object %}Edit car{% else %}Add car{% endif %}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="max-w-4xl space-y-6">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="text-red-600 text-sm">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="bg-white rounded-xl border border-slate-200 p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for field in form %}
+            <div class="{% if field.name == 'description' %}md:col-span-2{% endif %}">
+                <label class="block text-xs font-medium text-slate-600 mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.errors %}<div class="text-red-600 text-xs mb-1">{{ field.errors }}</div>{% endif %}
+                {{ field }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 p-6">
+        <h2 class="font-semibold text-slate-800 mb-2">Images</h2>
+        <p class="text-xs text-slate-500 mb-2">Upload additional images (optional).</p>
+        <input type="file" name="images" multiple accept="image/*" class="ap-input">
+    </div>
+    <div class="flex flex-wrap gap-2 items-center">
+        <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg border border-blue-700 shadow-sm hover:bg-blue-700">Save</button>
+        <a href="{% url 'admin_panel:car_list' %}" class="ap-btn ap-btn-neutral text-sm px-5 py-2.5">Cancel</a>
+    </div>
+</form>
+<script>
+(function(){
+    var brandEl = document.getElementById('id_brand');
+    var modelEl = document.getElementById('id_model');
+    if (!brandEl || !modelEl) return;
+    function loadModels(brandId, selectedId){
+        if (!brandId) { modelEl.innerHTML = ''; return; }
+        fetch('/admin-panel/api/brands/' + brandId + '/models/', { credentials: 'same-origin', headers: { 'Accept': 'application/json' }})
+            .then(function(r){ return r.json(); })
+            .then(function(data){
+                modelEl.innerHTML = '';
+                data.models.forEach(function(m){
+                    var opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.name;
+                    if (selectedId && String(m.id) === String(selectedId)) opt.selected = true;
+                    modelEl.appendChild(opt);
+                });
+            }).catch(function(){});
+    }
+    brandEl.addEventListener('change', function(){ loadModels(this.value, null); });
+    {% if object %}
+    loadModels(brandEl.value, {{ object.model_id }});
+    {% endif %}
+})();
+</script>
+{% endblock %}

@@ -97,6 +97,12 @@ class Car(models.Model):
         super().clean()
         if self.brand_id and self.model_id and self.model.brand_id != self.brand_id:
             raise ValidationError({'model': 'Selected model must belong to the selected brand.'})
+        if self.title and self.model_id and self.year is not None:
+            dup = Car.objects.filter(title=self.title, model_id=self.model_id, year=self.year)
+            if self.pk:
+                dup = dup.exclude(pk=self.pk)
+            if dup.exists():
+                raise ValidationError('A car with this title, model, and year already exists.')
 
     @property
     def primary_image(self):
@@ -179,6 +185,7 @@ class Inquiry(models.Model):
     subject = models.CharField(max_length=20, choices=SUBJECT_CHOICES, blank=True)
     message = models.TextField()
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='inquiries', null=True, blank=True)
+    is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

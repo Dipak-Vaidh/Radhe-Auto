@@ -1,0 +1,31 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Brands{% endblock %}
+{% block heading %}Brands{% endblock %}
+{% block content %}
+<div class="mb-4 flex flex-wrap gap-2">
+    <a href="{% url 'admin_panel:brand_add' %}" class="inline-flex px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">Add brand</a>
+    <a href="{% url 'admin_panel:brand_bulk_add' %}" class="inline-flex px-4 py-2 bg-white border border-slate-200 text-slate-800 text-sm font-medium rounded-lg hover:bg-slate-50">Bulk add brands</a>
+</div>
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <table class="w-full ap-table">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500"><tr><th>Name</th><th>Cars</th><th></th></tr></thead>
+        <tbody>
+            {% for b in brands %}
+            <tr>
+                <td class="font-medium">{{ b.name }}</td>
+                <td>{{ b.car_count }}</td>
+                <td class="text-right">
+                    <div class="ap-row-actions">
+                        <a href="{% url 'admin_panel:brand_edit' b.pk %}" class="ap-btn ap-btn-edit">Edit</a>
+                        <a href="{% url 'admin_panel:brand_delete_all_models' b.pk %}" class="ap-btn ap-btn-warn">Delete all models</a>
+                        <a href="{% url 'admin_panel:brand_delete' b.pk %}" class="ap-btn ap-btn-danger">Delete brand</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center text-slate-500 py-8">No brands.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

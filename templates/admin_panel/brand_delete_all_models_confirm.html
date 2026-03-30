@@ -1,0 +1,31 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Delete all models · {{ brand.name }}{% endblock %}
+{% block heading %}Delete all models for {{ brand.name }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl space-y-4">
+    <p class="text-sm text-slate-700">This removes every <strong>model</strong> under this brand that is <strong>not</strong> used by any car listing. Models tied to cars stay.</p>
+    {% if deletable %}
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-950">
+        <strong>Will delete ({{ deletable|length }}):</strong>
+        <ul class="list-disc list-inside mt-2">
+            {% for m in deletable %}<li>{{ m.name }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <p class="text-sm text-slate-600">No unused models to delete.</p>
+    {% endif %}
+    {% if blocked %}
+    <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-slate-700">
+        <strong>Cannot delete (used by cars) — {{ blocked|length }}:</strong>
+        <ul class="list-disc list-inside mt-2">
+            {% for m in blocked %}<li>{{ m.name }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    <form method="post" class="flex flex-wrap gap-2">
+        {% csrf_token %}
+        <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm rounded-lg {% if not deletable %}opacity-50 cursor-not-allowed{% endif %}" {% if not deletable %}disabled{% endif %}>Delete unused models</button>
+        <a href="{% url 'admin_panel:brand_list' %}" class="px-4 py-2 border border-slate-200 text-sm rounded-lg">Cancel</a>
+    </form>
+</div>
+{% endblock %}

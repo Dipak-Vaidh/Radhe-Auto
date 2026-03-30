@@ -1,0 +1,21 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Bulk add brands{% endblock %}
+{% block heading %}Bulk add brands{% endblock %}
+{% block content %}
+<p class="text-sm text-slate-600 mb-4">Enter brand names <strong>comma-separated</strong> and/or <strong>one per line</strong> (e.g. <code class="text-xs bg-slate-100 px-1 rounded">Honda, Hyundai, Tata</code>). Names that already exist are skipped.</p>
+<form method="post" class="max-w-2xl bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+    {% csrf_token %}
+    {% for field in form %}
+    <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">{{ field.label }}</label>
+        {{ field.errors }}
+        {{ field }}
+        {% if field.help_text %}<p class="text-xs text-slate-500 mt-1">{{ field.help_text }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    <div class="flex gap-2">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg">Add brands</button>
+        <a href="{% url 'admin_panel:brand_list' %}" class="px-4 py-2 border border-slate-200 text-sm rounded-lg">Cancel</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Bulk add models{% endblock %}
+{% block heading %}Bulk add models{% endblock %}
+{% block content %}
+<p class="text-sm text-slate-600 mb-4">Pick a brand, then enter model names <strong>comma-separated</strong> and/or <strong>one per line</strong>. Duplicates for that brand are skipped.</p>
+<form method="post" class="max-w-2xl bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+    {% csrf_token %}
+    {% for field in form %}
+    <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">{{ field.label }}</label>
+        {{ field.errors }}
+        {{ field }}
+        {% if field.help_text %}<p class="text-xs text-slate-500 mt-1">{{ field.help_text }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    <div class="flex gap-2">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg">Add models</button>
+        <a href="{% url 'admin_panel:carmodel_list' %}" class="px-4 py-2 border border-slate-200 text-sm rounded-lg">Cancel</a>
+    </div>
+</form>
+{% endblock %}
